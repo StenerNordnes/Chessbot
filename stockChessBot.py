@@ -11,10 +11,11 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 import keyboard
 from selenium.webdriver.common.action_chains import ActionChains
+import os
 
 
 
-game = st.Stockfish(r"C:\Users\stene\Downloads\stockfish-windows-x86-64\stockfish\stockfish-windows-x86-64.exe", depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
+game = st.Stockfish(r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe", depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
 
 BOARD_IMG = './bot_assets/board.png'
 
@@ -175,6 +176,10 @@ class BoardHTML(webdriver.Chrome):
 
         self.position = {}
         self.size = {}
+        self.previousFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+        self.turn = ''
+        self.castlingRights = 'KQkq'
+        self.skillLevel = 20
 
     def findBoard(self):
         svg_element = self.find_element(By.CLASS_NAME,"coordinates")
@@ -182,10 +187,10 @@ class BoardHTML(webdriver.Chrome):
         self.size = svg_element.size
 
 
-    def getBoardAsFen(self, turn):
+    def getBoardAsFen(self):
         elements = self.find_elements(By.CSS_SELECTOR, "div[class*=piece]")
 
-        elements = elements[2:-1]
+        
 
         b = [['_' for _ in range(8)] for _ in range(8)]
 
@@ -193,6 +198,8 @@ class BoardHTML(webdriver.Chrome):
 
         for element in elements:
             attr = element.get_attribute("class")
+            if attr.find("square") == -1:
+                continue
             _, piece, pos = attr.split()
             _,pos = pos.split('-')
             pos = list(pos)
@@ -219,7 +226,7 @@ class BoardHTML(webdriver.Chrome):
         # Remove the trailing '/'
         fen = fen[:-1]
 
-        return f'{fen} {turn} KQkq - 0 1'
+        return f'{fen} {self.turn} KQkq - 0 1'
 
     def movePiece(self,x, y, target_x, target_y):
 
@@ -245,44 +252,133 @@ class BoardHTML(webdriver.Chrome):
         actions.click()
         actions.move_by_offset(-targetCenter_x, -targetCenter_y)
         actions.perform()
+        self.previousFen = self.getBoardAsFen()
+
+    def login(self):
+        self.get("https://www.chess.com/login")
+        self.find_element(By.ID, "username").send_keys(os.environ.get('username'))
+        self.find_element(By.ID, "password").send_keys(os.environ.get('password'))
+        self.find_element(By.ID, "login").click()
+
+    def hasOponentMoved(self):
+        new = self.getBoardAsFen()
+        if new != self.previousFen:
+            self.previousFen = new
+            time.sleep(0.4)
+            return True
+        else:
+            self.previousFen = new
+            time.sleep(0.4)
+            return False
+        
+    def setTurn(self, turn):
+        self.turn = turn
+
+    def updateCastlingRights(self, rights):
+        if rights:
+            self.castlingRights = 'KQkq'
+        else: 
+            self.castlingRights = '-'
+    
+    def setSkillLevel(self, level):
+        self.skillLevel = level
+        game.set_skill_level(level)
+    
 
 
-board = BoardHTML()
+    def play(self):
+        
+
+        self.findBoard()
+
+        while True:
+            if self.hasOponentMoved() or keyboard.is_pressed('e'):
+                fen = self.getBoardAsFen()
+                game.set_fen_position(fen)
+                print(game.get_board_visual())
+                movestring = game.get_best_move_time(1000)
+                print(movestring)
+                print(game.get_evaluation())
+                bestmove = convertMoveStringHTML(movestring)
+                print(bestmove)
+                self.movePiece(*bestmove)
+                time.sleep(0.4)
+            else:
+                time.sleep(0.4)
+                continue
+
+
+        
+
+# board = BoardHTML()
+
+# board.login()
+# board.setSkillLevel(20)
+# # board.setTurn(input('ready'))
+# while True:
+#     try:
+#         board.play()
+#     except st.models.StockfishException as e:
+#         game = st.Stockfish(r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe", depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
+#         print('Stockfish restarted')
+
+#         continue
+#     except Exception as e:
+#         print(e)
+#         continue
+
+
+
+
+
+
+
+
+
 
 # Load the web page
-board.get("https://www.chess.com/play/computer")
-game.set_elo_rating(2000)
+# board.get("https://www.chess.com/play/computer")
+# board.login()
+# board.setSkillLevel(20)
 
 
-turn = input('ready')
-board.findBoard()
+# board.setTurn(input('ready'))
+# board.findBoard()
+# while True:
+#     if keyboard.is_pressed('r'):
+#         while True:
+#             try:
+#                 if board.hasOponentMoved() or keyboard.is_pressed('e'):
+#                     fen = board.getBoardAsFen()
+#                     game.set_fen_position(fen)
+#                     print(game.get_board_visual())
+#                     movestring = game.get_best_move_time(1000)
+#                     print(movestring)
+#                     print(game.get_evaluation())
+#                     bestmove = convertMoveStringHTML(movestring)
+#                     print(bestmove)
+#                     board.movePiece(*bestmove)
+#                     time.sleep(0.4)
+                
+#                 if keyboard.is_pressed('q'):
+#                     board.setTurn(input('ready'))
+                    
+                    
+                    
+
+#             except st.models.StockfishException as e:
+#                 game = st.Stockfish(r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe", depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
+#                 print('Stockfish restarted')
+
+#                 continue
+#             except Exception as e:
+#                 print(e)
+#                 continue
 
 
-while True:
-    try:
-        if keyboard.is_pressed('r'):
-            print("Key 'R' is currently pressed.")
-            fen = board.getBoardAsFen(turn)
-            game.set_fen_position(fen)
-            print(game.get_board_visual())
-            board.save_screenshot('boardscreen.png')
-            movestring = game.get_best_move_time(1000)
-            print(movestring)
-            print(game.get_evaluation())
-            bestmove = convertMoveStringHTML(movestring)
-            print(bestmove)
-            board.movePiece(*bestmove)
 
-    except st.models.StockfishException as e:
-        game = st.Stockfish(r"C:\Users\stene\Downloads\stockfish-windows-x86-64\stockfish\stockfish-windows-x86-64.exe", depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
-        print('Stockfish restarted')
-    except KeyboardInterrupt:
-        break
-
-
-
-# Close the browser window
-board.quit()
+# # Close the browser window
+# board.quit()
 
 
 
