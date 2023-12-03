@@ -1,16 +1,25 @@
 import customtkinter as tk
 from stockChessBot import BoardHTML
 import stockfish as st
+import os
+import threading
+from dotenv import load_dotenv
+
+load_dotenv()  # take environment variables from .env.
+
+stockfish_path = os.environ.get('stockfish_path')
 
 class ChessBotGUI:
     def __init__(self):
         self.root = tk.CTk()
         self.root.title("StochChessBot")
-        self.game = st.Stockfish(r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe", depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
+        self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
         self.board = BoardHTML()
 
+        self.root.attributes("-topmost", 1)
+
         # Start Game button
-        self.start_button = tk.CTkButton(self.root, text="Start Game", command=self.start_game)
+        self.start_button = tk.CTkButton(self.root, text="Start Game", command=self.start_game_thread)
         self.start_button.pack()
 
         # Set Skill button
@@ -36,16 +45,19 @@ class ChessBotGUI:
             try:
                 self.board.play()
             except st.models.StockfishException as e:
-                self.game = st.Stockfish(r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe", depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
+                self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
                 print('Stockfish restarted')
                 continue
             except Exception as e:
                 print(e)
                 continue
 
+    def start_game_thread(self):
+        threading.Thread(target=self.start_game).start()
+
     def set_skill(self):
         self.skill_level = tk.StringVar()
-        self.skill_entry = tk.Entry(self.root, textvariable=self.skill_level)
+        self.skill_entry = tk.CTkEntry(self.root, textvariable=self.skill_level)
         self.skill_entry.pack()
         self.skill_button = tk.CTkButton(self.root, text="Set Skill", command=self.update_skill)
         self.skill_button.pack()
@@ -66,8 +78,6 @@ class ChessBotGUI:
 
     def login(self):
         self.board.login()
-
-        # Add your GUI elements here
 
 if __name__ == "__main__":
     gui = ChessBotGUI()

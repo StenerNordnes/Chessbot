@@ -28,10 +28,15 @@ from selenium.webdriver.common.by import By
 import keyboard
 from selenium.webdriver.common.action_chains import ActionChains
 import os
+from dotenv import load_dotenv
+
+load_dotenv()  # take environment variables from .env.
+
+stockfish_path = os.environ.get('stockfish_path')
 
 
 
-game = st.Stockfish(r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe", depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
+game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
 
 BOARD_IMG = './bot_assets/board.png'
 
@@ -205,9 +210,10 @@ class BoardHTML(webdriver.Chrome):
         self.position = {}
         self.size = {}
         self.previousFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-        self.turn = ''
+        self.turn = 'w'
         self.castlingRights = 'KQkq'
         self.skillLevel = 20
+        self.get("https://www.chess.com/play/computer")
 
     def findBoard(self):
         """
@@ -218,7 +224,7 @@ class BoardHTML(webdriver.Chrome):
         self.size = svg_element.size
 
 
-    def getBoardAsFen(self, turn):
+    def getBoardAsFen(self):
         """
         Returns the current position of the chess board in FEN notation.
 
@@ -331,12 +337,10 @@ class BoardHTML(webdriver.Chrome):
     
 
 
-    def play(self):
-    
-        self.findBoard()
-
+    def play(self):    
         while True:
             if self.hasOponentMoved() or keyboard.is_pressed('e'):
+                self.findBoard()
                 fen = self.getBoardAsFen()
                 game.set_fen_position(fen)
                 print(game.get_board_visual())
@@ -346,10 +350,8 @@ class BoardHTML(webdriver.Chrome):
                 bestmove = convertMoveStringHTML(movestring)
                 print(bestmove)
                 self.movePiece(*bestmove)
-                time.sleep(0.4)
-            else:
-                time.sleep(0.4)
-                continue
+            
+            time.sleep(0.4)
 
 
         
