@@ -37,6 +37,7 @@ class ChessBotGUI:
                 self.board.play()
             except st.models.StockfishException as e:
                 self.game = st.Stockfish(r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe", depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
+                self.board.updateCastlingRights(False)
                 print('Stockfish restarted')
                 continue
             except Exception as e:

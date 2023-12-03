@@ -226,7 +226,7 @@ class BoardHTML(webdriver.Chrome):
         # Remove the trailing '/'
         fen = fen[:-1]
 
-        return f'{fen} {self.turn} KQkq - 0 1'
+        return f'{fen} {self.turn} {self.castlingRights} - 0 1'
 
     def movePiece(self,x, y, target_x, target_y):
 
@@ -256,8 +256,8 @@ class BoardHTML(webdriver.Chrome):
 
     def login(self):
         self.get("https://www.chess.com/login")
-        self.find_element(By.ID, "username").send_keys(os.environ.get('username'))
-        self.find_element(By.ID, "password").send_keys(os.environ.get('password'))
+        self.find_element(By.ID, "username").send_keys('cribbengalos')
+        self.find_element(By.ID, "password").send_keys('Hansjens1')
         self.find_element(By.ID, "login").click()
 
     def hasOponentMoved(self):
