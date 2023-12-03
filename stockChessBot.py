@@ -324,6 +324,7 @@ class BoardHTML(webdriver.Chrome):
         
     def setTurn(self, turn):
         self.turn = turn
+        print('Turn set to: ', turn)
 
     def updateCastlingRights(self, rights):
         if rights:
