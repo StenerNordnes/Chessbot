@@ -1,3 +1,19 @@
+"""
+This script is a chess bot that uses the Stockfish chess engine and Selenium WebDriver to play chess on chess.com against the computer. It captures the chessboard from the screen, identifies the pieces, and makes moves based on the analysis of the Stockfish engine.
+
+The script consists of the following classes and functions:
+
+- `convertMoveString(moveString)`: Converts a move string in algebraic notation to a list of coordinates.
+- `convertMoveStringHTML(moveString)`: Converts a move string in algebraic notation to a list of coordinates for HTML chessboard.
+- `class BoardVisual`: Represents the visual chessboard on the screen. It captures screenshots of each tile, identifies the pieces, and provides methods for moving pieces.
+- `class BoardHTML`: Represents the HTML chessboard on chess.com. It provides methods for capturing the current position, making moves, and retrieving the FEN string representation of the board.
+- `board = BoardHTML()`: Creates an instance of the `BoardHTML` class.
+- `game = st.Stockfish(...)`: Creates an instance of the Stockfish chess engine.
+- `turn = input('ready')`: Waits for user input to start the game.
+- `while True:`: Main game loop that listens for the 'r' key press, captures the current position, analyzes it with Stockfish, and makes the best move on the chessboard.
+
+To use this script, you need to have the Stockfish chess engine installed and provide the correct file path to the Stockfish executable. You also need to have the necessary Python libraries installed: stockfish, pyautogui, PIL, imagehash, cv2, numpy, pyscreeze, skimage, selenium, and keyboard.
+"""
 import stockfish as st
 import pyautogui as p
 from PIL import Image
@@ -12,10 +28,15 @@ from selenium.webdriver.common.by import By
 import keyboard
 from selenium.webdriver.common.action_chains import ActionChains
 import os
+from dotenv import load_dotenv
+
+load_dotenv()  # take environment variables from .env.
+
+stockfish_path = os.environ.get('stockfish_path')
 
 
 
-game = st.Stockfish(r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe", depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
+game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
 
 BOARD_IMG = './bot_assets/board.png'
 
@@ -171,35 +192,58 @@ class BoardVisual():
                 
 
 class BoardHTML(webdriver.Chrome):
+    """
+    Represents a chess board in HTML format.
+
+    Attributes:
+    - position: A dictionary representing the current position of the chess pieces on the board.
+    - size: A dictionary representing the size of the chess board.
+
+    Methods:
+    - findBoard(): Finds the chess board element on the webpage.
+    - getBoardAsFen(turn): Returns the current position of the chess board in FEN notation.
+    - movePiece(x, y, target_x, target_y): Moves a chess piece from the specified position to the target position on the board.
+    """
     def __init__(self):
         super(BoardHTML, self).__init__()
 
         self.position = {}
         self.size = {}
         self.previousFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-        self.turn = ''
+        self.turn = 'w'
         self.castlingRights = 'KQkq'
         self.skillLevel = 20
+        self.get("https://www.chess.com/play/computer")
 
     def findBoard(self):
+        """
+        Finds the chess board element on the webpage.
+        """
         svg_element = self.find_element(By.CLASS_NAME,"coordinates")
         self.location = svg_element.location
         self.size = svg_element.size
 
 
     def getBoardAsFen(self):
-        elements = self.find_elements(By.CSS_SELECTOR, "div[class*=piece]")
+        """
+        Returns the current position of the chess board in FEN notation.
 
-        
+        Parameters:
+        - turn: A string representing the current turn (e.g., 'w' for white, 'b' for black).
+
+        Returns:
+        - fen: A string representing the FEN notation of the current position.
+        """
+        elements = self.find_elements(By.CSS_SELECTOR, "div[class*=piece]")
 
         b = [['_' for _ in range(8)] for _ in range(8)]
 
-
-
         for element in elements:
             attr = element.get_attribute("class")
-            if attr.find("square") == -1:
+
+            if attr.find('square') == -1:
                 continue
+
             _, piece, pos = attr.split()
             _,pos = pos.split('-')
             pos = list(pos)
@@ -229,9 +273,16 @@ class BoardHTML(webdriver.Chrome):
         return f'{fen} {self.turn} {self.castlingRights} - 0 1'
 
     def movePiece(self,x, y, target_x, target_y):
+        """
+        Moves a chess piece from the specified position to the target position on the board.
 
+        Parameters:
+        - x: An integer representing the x-coordinate of the starting position.
+        - y: An integer representing the y-coordinate of the starting position.
+        - target_x: An integer representing the x-coordinate of the target position.
+        - target_y: An integer representing the y-coordinate of the target position.
+        """
         self.findBoard()
-
         Wdx = self.size['width']/8
         Hdx = self.size['height']/8
         centerX = self.location['x'] + Wdx/2 + x*Wdx
@@ -286,13 +337,10 @@ class BoardHTML(webdriver.Chrome):
     
 
 
-    def play(self):
-        
-
-        self.findBoard()
-
+    def play(self):    
         while True:
             if self.hasOponentMoved() or keyboard.is_pressed('e'):
+                self.findBoard()
                 fen = self.getBoardAsFen()
                 game.set_fen_position(fen)
                 print(game.get_board_visual())
@@ -302,10 +350,8 @@ class BoardHTML(webdriver.Chrome):
                 bestmove = convertMoveStringHTML(movestring)
                 print(bestmove)
                 self.movePiece(*bestmove)
-                time.sleep(0.4)
-            else:
-                time.sleep(0.4)
-                continue
+            
+            time.sleep(0.4)
 
 
         
