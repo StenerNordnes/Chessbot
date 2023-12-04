@@ -8,13 +8,15 @@ from dotenv import load_dotenv
 load_dotenv()  # take environment variables from .env.
 
 stockfish_path = os.environ.get('stockfish_path')
+# stockfish_path = r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe"
 
 class ChessBotGUI:
     def __init__(self):
         self.root = tk.CTk()
-        self.root.title("StochChessBot")
+        self.root.title("StockChessBot")
         self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
         self.board = BoardHTML()
+        self.playing = False
 
         self.root.attributes("-topmost", 1)
 
@@ -23,10 +25,14 @@ class ChessBotGUI:
         self.variables_frame.pack(side='right', padx=10)
 
         # Display boardHTML variables
-        self.castling_rights_label = tk.CTkLabel(self.variables_frame, text="Castling Rights: " + self.board.castlingRights)
+        self.castling_rights_label = tk.CTkLabel(self.variables_frame, text="Castling Rights: " + self.board.castlingString)
         self.castling_rights_label.pack()
         self.turn_label = tk.CTkLabel(self.variables_frame, text="Turn: " + self.board.turn)
         self.turn_label.pack()
+        self.playing_label = tk.CTkLabel(self.variables_frame, text="Playing: " + str(self.playing))
+        self.playing_label.pack()
+
+
 
         # Add more labels/buttons as needed
 
@@ -46,7 +52,28 @@ class ChessBotGUI:
 
         # Login button
         self.login_button = tk.CTkButton(self.root, text="Login", command=self.login)
-        self.login_button.pack()
+        self.login_button.pack(pady = 10)
+
+        # Update castling K button
+        self.update_castlingK_button = tk.CTkButton(self.root, text="Update castling K", command=self.update_castlingK)
+        self.update_castlingK_button.pack(pady = 10)
+
+        # Update castling Q button
+        self.update_castlingQ_button = tk.CTkButton(self.root, text="Update castling Q", command=self.update_castlingQ)
+        self.update_castlingQ_button.pack(pady = 10)
+
+        # Update castling k button
+        self.update_castlingk_button = tk.CTkButton(self.root, text="Update castling k", command=self.update_castlingk)
+        self.update_castlingk_button.pack(pady = 10)
+
+        # Update castling q button
+        self.update_castlingq_button = tk.CTkButton(self.root, text="Update castling q", command=self.update_castlingq)
+        self.update_castlingq_button.pack(pady = 10)
+
+        # End game button
+        self.end_button = tk.CTkButton(self.root, text="End Game", command=self.end_button)
+        self.end_button.pack(pady=10)
+
 
         self.root.update_idletasks()
         # Add more buttons as needed
@@ -54,20 +81,27 @@ class ChessBotGUI:
         self.root.mainloop()
 
     def start_game(self):
-        while True:
+        self.playing = True
+        self.playing_label.configure(text="Playing: " + str(self.playing))
+        while self.playing:
             try:
                 self.board.play()
             except st.models.StockfishException as e:
                 print(e)
                 self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
-                self.board.updateCastlingRights(False)
                 print('Stockfish restarted')
             except Exception as e:
                 print(e)
                 break
 
     def start_game_thread(self):
-        threading.Thread(target=self.start_game).start()
+        self.thread = threading.Thread(target=self.start_game)
+        self.thread.start()
+
+    def end_button(self):
+        self.playing = False
+        self.board.endGame()
+        self.playing_label.configure(text="Playing: "+ str(self.playing))
 
     def set_skill(self):
         self.skill_level = tk.StringVar()
@@ -85,6 +119,7 @@ class ChessBotGUI:
 
     def set_turnW(self):
         # Code to set turn goes here
+        self.update_labels()
         self.board.setTurn('w')
 
     def set_turnB(self):
@@ -94,13 +129,21 @@ class ChessBotGUI:
         self.board.login()
 
     def update_castlingK(self):
-        self.board.update_castlingRights(0)
+        self.board.updateCastlingRights(0)
     def update_castlingQ(self):
-        self.board.update_castlingRights(1)
+        self.board.updateCastlingRights(1)
     def update_castlingk(self):
-        self.board.update_castlingRights(2)
+        self.board.updateCastlingRights(2)
     def update_castlingq(self):
-        self.board.update_castlingRights(3)
+        self.board.updateCastlingRights(3)
+
+    
+    # Function to update labels
+    def update_labels(self):
+        self.castling_rights_label.configure(text="Castling Rights: " + self.board.castlingString)
+        self.turn_label.configure(text="Turn: " + self.board.turn)
+
+        self.root.after(1000, self.update_labels)
 
 if __name__ == "__main__":
     gui = ChessBotGUI()

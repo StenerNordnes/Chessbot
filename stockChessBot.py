@@ -33,6 +33,7 @@ from dotenv import load_dotenv
 load_dotenv()  # take environment variables from .env.
 
 stockfish_path = os.environ.get('stockfish_path')
+# stockfish_path = r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe"
 
 
 
@@ -211,10 +212,11 @@ class BoardHTML(webdriver.Chrome):
         self.size = {}
         self.previousFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
         self.turn = 'w'
-        self.castlingRights = True, True, True, True
+        self.castlingRights = [True, True, True, True]
         self.castlingString = 'KQkq'
         self.skillLevel = 20
         self.get("https://www.chess.com/play/computer")
+        self.playing = False
 
     def findBoard(self):
         """
@@ -308,8 +310,8 @@ class BoardHTML(webdriver.Chrome):
 
     def login(self):
         self.get("https://www.chess.com/login")
-        self.find_element(By.ID, "username").send_keys('cribbengalos')
-        self.find_element(By.ID, "password").send_keys('Hansjens1')
+        self.find_element(By.ID, "username").send_keys(os.environ.get('username'))
+        self.find_element(By.ID, "password").send_keys(os.environ.get('password'))
         self.find_element(By.ID, "login").click()
 
     def hasOponentMoved(self):
@@ -328,31 +330,31 @@ class BoardHTML(webdriver.Chrome):
         print('Turn set to: ', turn)
 
     def updateCastlingRights(self, n):
-        self.castlingRights[n] != self.castlingRights[n]
+        self.castlingRights[n] = not(self.castlingRights[n])
+        print('Castling rights updated: ', self.castlingRights)
         self.updateCastlingString()
 
     def updateCastlingString(self):
-        self.castlingString = ''
-        if self.castlingRights[0]:
-            self.castlingString += 'K'
-        if self.castlingRights[1]:
-            self.castlingString += 'Q'
-        if self.castlingRights[2]:
-            self.castlingString += 'k'
-        if self.castlingRights[3]:
-            self.castlingString += 'q'
-        if len(self.castlingString) == 0:
+        castling_symbols = ['K', 'Q', 'k', 'q']
+        self.castlingString = ''.join(symbol for symbol, right in zip(castling_symbols, self.castlingRights) if right)
+        if not self.castlingString:
             self.castlingString = '-'
+        
         
     
     def setSkillLevel(self, level):
         self.skillLevel = level
         game.set_skill_level(level)
+
+    def endGame(self):
+        self.playing = False
+        print('Game ended')
     
 
 
     def play(self):    
-        while True:
+        self.playing = True
+        while self.playing:
             if self.hasOponentMoved() or keyboard.is_pressed('e'):
                 self.findBoard()
                 fen = self.getBoardAsFen()
