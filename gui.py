@@ -39,10 +39,9 @@ class ChessBotGUI:
                 self.game = st.Stockfish(r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe", depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
                 self.board.updateCastlingRights(False)
                 print('Stockfish restarted')
-                continue
             except Exception as e:
                 print(e)
-                continue
+                break
 
     def set_skill(self):
         self.skill_level = tk.StringVar()
