@@ -36,6 +36,26 @@ class ChessBotGUI:
         self.login_button = tk.CTkButton(self.root, text="Login", command=self.login)
         self.login_button.pack()
 
+        # Button to update castlingrighst K
+        self.castlingK_button = tk.CTkButton(self.root, text="Update castling rights K", command=self.update_castlingK) 
+        self.castlingK_button.pack()
+
+
+        # Button to update castlingrighst Q
+        self.castlingQ_button = tk.CTkButton(self.root, text="Update castling rights Q", command=self.update_castlingQ)
+        self.castlingQ_button.pack()
+
+
+        # Button to update castlingrighst k
+        self.castlingk_button = tk.CTkButton(self.root, text="Update castling rights k", command=self.update_castlingk)
+        self.castlingk_button.pack()
+
+
+
+        # Button to update castlingrighst q
+        self.castlingq_button = tk.CTkButton(self.root, text="Update castling rights q", command=self.update_castlingq)
+        self.castlingq_button.pack()
+
         # Add more buttons as needed
 
         self.root.mainloop()
@@ -46,7 +66,6 @@ class ChessBotGUI:
                 self.board.play()
             except st.models.StockfishException as e:
                 self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
-                self.board.updateCastlingRights(False)
                 print('Stockfish restarted')
             except Exception as e:
                 print(e)
@@ -78,6 +97,15 @@ class ChessBotGUI:
 
     def login(self):
         self.board.login()
+
+    def update_castlingK(self):
+        self.board.update_castlingRights(0)
+    def update_castlingQ(self):
+        self.board.update_castlingRights(1)
+    def update_castlingk(self):
+        self.board.update_castlingRights(2)
+    def update_castlingq(self):
+        self.board.update_castlingRights(3)
 
 if __name__ == "__main__":
     gui = ChessBotGUI()
