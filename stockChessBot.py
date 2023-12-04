@@ -211,7 +211,8 @@ class BoardHTML(webdriver.Chrome):
         self.size = {}
         self.previousFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
         self.turn = 'w'
-        self.castlingRights = 'KQkq'
+        self.castlingRights = True, True, True, True
+        self.castlingString = 'KQkq'
         self.skillLevel = 20
         self.get("https://www.chess.com/play/computer")
 
@@ -270,7 +271,7 @@ class BoardHTML(webdriver.Chrome):
         # Remove the trailing '/'
         fen = fen[:-1]
 
-        return f'{fen} {self.turn} {self.castlingRights} - 0 1'
+        return f'{fen} {self.turn} {self.castlingString} - 0 1'
 
     def movePiece(self,x, y, target_x, target_y):
         """
@@ -326,11 +327,23 @@ class BoardHTML(webdriver.Chrome):
         self.turn = turn
         print('Turn set to: ', turn)
 
-    def updateCastlingRights(self, rights):
-        if rights:
-            self.castlingRights = 'KQkq'
-        else: 
-            self.castlingRights = '-'
+    def updateCastlingRights(self, n):
+        self.castlingRights[n] != self.castlingRights[n]
+        self.updateCastlingString()
+
+    def updateCastlingString(self):
+        self.castlingString = ''
+        if self.castlingRights[0]:
+            self.castlingString += 'K'
+        if self.castlingRights[1]:
+            self.castlingString += 'Q'
+        if self.castlingRights[2]:
+            self.castlingString += 'k'
+        if self.castlingRights[3]:
+            self.castlingString += 'q'
+        if len(self.castlingString) == 0:
+            self.castlingString = '-'
+        
     
     def setSkillLevel(self, level):
         self.skillLevel = level

@@ -46,7 +46,7 @@ class ChessBotGUI:
 
         # Login button
         self.login_button = tk.CTkButton(self.root, text="Login", command=self.login)
-        self.login_button.pack(pady=10)
+        self.login_button.pack()
 
         self.root.update_idletasks()
         # Add more buttons as needed
@@ -61,12 +61,7 @@ class ChessBotGUI:
                 print(e)
                 self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
                 self.board.updateCastlingRights(False)
-                print(self.board.previousFen)
-                print('Is fen valid?: ',self.game.is_fen_valid(self.board.previousFen))
-
-
                 print('Stockfish restarted')
-                continue
             except Exception as e:
                 print(e)
                 break
@@ -97,6 +92,15 @@ class ChessBotGUI:
 
     def login(self):
         self.board.login()
+
+    def update_castlingK(self):
+        self.board.update_castlingRights(0)
+    def update_castlingQ(self):
+        self.board.update_castlingRights(1)
+    def update_castlingk(self):
+        self.board.update_castlingRights(2)
+    def update_castlingq(self):
+        self.board.update_castlingRights(3)
 
 if __name__ == "__main__":
     gui = ChessBotGUI()
