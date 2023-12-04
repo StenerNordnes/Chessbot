@@ -33,6 +33,7 @@ from dotenv import load_dotenv
 load_dotenv()  # take environment variables from .env.
 
 stockfish_path = os.environ.get('stockfish_path')
+# stockfish_path = r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe"
 
 
 
@@ -211,9 +212,11 @@ class BoardHTML(webdriver.Chrome):
         self.size = {}
         self.previousFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
         self.turn = 'w'
-        self.castlingRights = 'KQkq'
+        self.castlingRights = [True, True, True, True]
+        self.castlingString = 'KQkq'
         self.skillLevel = 20
         self.get("https://www.chess.com/play/computer")
+        self.playing = False
 
     def findBoard(self):
         """
@@ -270,7 +273,7 @@ class BoardHTML(webdriver.Chrome):
         # Remove the trailing '/'
         fen = fen[:-1]
 
-        return f'{fen} {self.turn} KQkq - 0 1'
+        return f'{fen} {self.turn} {self.castlingString} - 0 1'
 
     def movePiece(self,x, y, target_x, target_y):
         """
@@ -324,21 +327,34 @@ class BoardHTML(webdriver.Chrome):
         
     def setTurn(self, turn):
         self.turn = turn
+        print('Turn set to: ', turn)
 
-    def updateCastlingRights(self, rights):
-        if rights:
-            self.castlingRights = 'KQkq'
-        else: 
-            self.castlingRights = '-'
+    def updateCastlingRights(self, n):
+        self.castlingRights[n] = not(self.castlingRights[n])
+        print('Castling rights updated: ', self.castlingRights)
+        self.updateCastlingString()
+
+    def updateCastlingString(self):
+        castling_symbols = ['K', 'Q', 'k', 'q']
+        self.castlingString = ''.join(symbol for symbol, right in zip(castling_symbols, self.castlingRights) if right)
+        if not self.castlingString:
+            self.castlingString = '-'
+        
+        
     
     def setSkillLevel(self, level):
         self.skillLevel = level
         game.set_skill_level(level)
+
+    def endGame(self):
+        self.playing = False
+        print('Game ended')
     
 
 
     def play(self):    
-        while True:
+        self.playing = True
+        while self.playing:
             if self.hasOponentMoved() or keyboard.is_pressed('e'):
                 self.findBoard()
                 fen = self.getBoardAsFen()
