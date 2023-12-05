@@ -77,8 +77,13 @@ class ChessBotGUI:
         self.end_button = tk.CTkButton(self.root, text="End Game", command=self.end_button)
         self.end_button.pack(pady=10)
 
+        
 
         self.root.update_idletasks()
+
+        self.update_labels()
+
+
         # Add more buttons as needed
 
         self.root.mainloop()
@@ -121,7 +126,6 @@ class ChessBotGUI:
 
     def set_turnW(self):
         # Code to set turn goes here
-        self.update_labels()
         self.board.setTurn('w')
 
     def set_turnB(self):
