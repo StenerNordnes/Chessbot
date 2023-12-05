@@ -34,7 +34,6 @@ load_dotenv()  # take environment variables from .env.
 
 stockfish_path = os.environ.get('stockfish_path')
 
-game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
 
 BOARD_IMG = './bot_assets/board.png'
 
@@ -205,6 +204,7 @@ class BoardHTML(webdriver.Chrome):
         self.skillLevel = 20
         self.get("https://www.chess.com/play/computer")
         self.playing = False
+        self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
 
     def findBoard(self):
         """
@@ -332,11 +332,15 @@ class BoardHTML(webdriver.Chrome):
     
     def setSkillLevel(self, level):
         self.skillLevel = level
-        game.set_skill_level(level)
+        self.game.set_skill_level(level)
 
     def endGame(self):
         self.playing = False
         print('Game ended')
+    
+    def resetStockfish(self):
+        self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
+        print('Stockfish restarted')
     
 
 
@@ -346,16 +350,21 @@ class BoardHTML(webdriver.Chrome):
             if self.hasOponentMoved() or keyboard.is_pressed('e'):
                 self.findBoard()
                 fen = self.getBoardAsFen()
-                game.set_fen_position(fen)
-                print(game.get_board_visual())
-                movestring = game.get_best_move_time(1000)
+                self.game.set_fen_position(fen)
+                print(self.game.get_board_visual())
+                movestring = self.game.get_best_move_time(1000)
                 print(movestring)
-                print(game.get_evaluation())
+                print(self.game.get_evaluation())
                 bestmove = convertMoveStringHTML(movestring)
                 print(bestmove)
                 self.movePiece(*bestmove)
             
             time.sleep(0.4)
+
+    def getStats(self):
+        wdl = self.game.get_wdl_stats()
+        return {"wdl": wdl, **self.game.get_evaluation()}
+        
 
 
 

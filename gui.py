@@ -13,7 +13,7 @@ class ChessBotGUI:
     def __init__(self):
         self.root = tk.CTk()
         self.root.title("StockChessBot")
-        self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
+        self.game = st.Stockfish(stockfish_path, depth=24, parameters={"Threads": 2, "Minimum Thinking Time": 30})
         self.board = BoardHTML()
         self.playing = False
 
@@ -30,6 +30,11 @@ class ChessBotGUI:
         self.turn_label.pack()
         self.playing_label = tk.CTkLabel(self.variables_frame, text="Playing: " + str(self.playing))
         self.playing_label.pack()
+
+        self.display_stats_label = tk.CTkLabel(self.variables_frame, text="Display Stats: " + str(self.board.getStats()))
+        self.display_stats_label.pack()
+
+
 
         # Add more labels/buttons as needed
 
@@ -84,10 +89,9 @@ class ChessBotGUI:
                 self.board.play()
             except st.models.StockfishException as e:
                 print(e)
-                self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
-                print('Stockfish restarted')
+                self.board.resetStockfish()
             except Exception as e:
-                print(e)
+                print(e.with_traceback())
                 break
 
     def start_game_thread(self):
@@ -139,6 +143,7 @@ class ChessBotGUI:
     def update_labels(self):
         self.castling_rights_label.configure(text="Castling Rights: " + self.board.castlingString)
         self.turn_label.configure(text="Turn: " + self.board.turn)
+        self.display_stats_label.configure(text="Display Stats: " + str(self.board.getStats()))
 
         self.root.after(1000, self.update_labels)
 
