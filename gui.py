@@ -87,6 +87,7 @@ class ChessBotGUI:
         while self.playing:
             try:
                 self.board.play()
+                
             except st.models.StockfishException as e:
                 print(e)
                 self.board.resetStockfish()
@@ -139,7 +140,6 @@ class ChessBotGUI:
     def update_castlingq(self):
         self.board.updateCastlingRights(3)
 
-    # Function to update labels
     def update_labels(self):
         self.castling_rights_label.configure(text="Castling Rights: " + self.board.castlingString)
         self.turn_label.configure(text="Turn: " + self.board.turn)
