@@ -8,7 +8,6 @@ from dotenv import load_dotenv
 load_dotenv()  # take environment variables from .env.
 
 stockfish_path = os.environ.get('stockfish_path')
-# stockfish_path = r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe"
 
 class ChessBotGUI:
     def __init__(self):
@@ -77,8 +76,6 @@ class ChessBotGUI:
         self.end_button = tk.CTkButton(self.root, text="End Game", command=self.end_button)
         self.end_button.pack(pady=10)
 
-        
-
         self.root.update_idletasks()
 
         self.update_labels()
@@ -94,6 +91,7 @@ class ChessBotGUI:
         while self.playing:
             try:
                 self.board.play()
+                
             except st.models.StockfishException as e:
                 print(e)
                 self.board.resetStockfish()
@@ -136,15 +134,16 @@ class ChessBotGUI:
 
     def update_castlingK(self):
         self.board.updateCastlingRights(0)
+
     def update_castlingQ(self):
         self.board.updateCastlingRights(1)
+
     def update_castlingk(self):
         self.board.updateCastlingRights(2)
+
     def update_castlingq(self):
         self.board.updateCastlingRights(3)
 
-    
-    # Function to update labels
     def update_labels(self):
         self.castling_rights_label.configure(text="Castling Rights: " + self.board.castlingString)
         self.turn_label.configure(text="Turn: " + self.board.turn)
