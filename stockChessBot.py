@@ -33,9 +33,6 @@ from dotenv import load_dotenv
 load_dotenv()  # take environment variables from .env.
 
 stockfish_path = os.environ.get('stockfish_path')
-# stockfish_path = r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe"
-
-
 
 game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
 
@@ -63,12 +60,6 @@ piece_mapping = {
     'wr': 'R', 'wn': 'N', 'wb': 'B', 'wk': 'K', 'wq': 'Q', 'wp': 'P'
 }
 
-
-
-
-
-
-
 def convertMoveString(moveString):
     char_list = list(moveString)
 
@@ -87,9 +78,6 @@ def convertMoveStringHTML(moveString):
     char_list[2] = int(ord(char_list[2]) - ord('a'))
     char_list[3] = 8 - int(char_list[3])
     return [char_list[0], char_list[1], char_list[2], char_list[3]]
-
-
-
 
 
 class BoardVisual():
@@ -370,77 +358,6 @@ class BoardHTML(webdriver.Chrome):
             time.sleep(0.4)
 
 
-        
-
-# board = BoardHTML()
-
-# board.login()
-# board.setSkillLevel(20)
-# # board.setTurn(input('ready'))
-# while True:
-#     try:
-#         board.play()
-#     except st.models.StockfishException as e:
-#         game = st.Stockfish(r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe", depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
-#         print('Stockfish restarted')
-
-#         continue
-#     except Exception as e:
-#         print(e)
-#         continue
-
-
-
-
-
-
-
-
-
-
-# Load the web page
-# board.get("https://www.chess.com/play/computer")
-# board.login()
-# board.setSkillLevel(20)
-
-
-# board.setTurn(input('ready'))
-# board.findBoard()
-# while True:
-#     if keyboard.is_pressed('r'):
-#         while True:
-#             try:
-#                 if board.hasOponentMoved() or keyboard.is_pressed('e'):
-#                     fen = board.getBoardAsFen()
-#                     game.set_fen_position(fen)
-#                     print(game.get_board_visual())
-#                     movestring = game.get_best_move_time(1000)
-#                     print(movestring)
-#                     print(game.get_evaluation())
-#                     bestmove = convertMoveStringHTML(movestring)
-#                     print(bestmove)
-#                     board.movePiece(*bestmove)
-#                     time.sleep(0.4)
-                
-#                 if keyboard.is_pressed('q'):
-#                     board.setTurn(input('ready'))
-                    
-                    
-                    
-
-#             except st.models.StockfishException as e:
-#                 game = st.Stockfish(r"C:\Users\jacob\Downloads\stockfish-windows-x86-64-avx2\stockfish\stockfish-windows-x86-64-avx2.exe", depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
-#                 print('Stockfish restarted')
-
-#                 continue
-#             except Exception as e:
-#                 print(e)
-#                 continue
-
-
-
-# # Close the browser window
-# board.quit()
 
 
 
