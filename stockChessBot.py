@@ -345,23 +345,22 @@ class BoardHTML(webdriver.Chrome):
 
 
     def play(self):    
-        self.playing = True
-        while self.playing:
-            if self.hasOponentMoved() or keyboard.is_pressed('e'):
-                self.findBoard()
-                fen = self.getBoardAsFen()
-                self.game.set_fen_position(fen)
-                print(self.game.get_board_visual())
-                movestring = self.game.get_best_move()
-                print(movestring)
-                print('before')
-                # print(self.game.get_evaluation())
-                print('after')
-                bestmove = convertMoveStringHTML(movestring)
-                print(bestmove)
-                self.movePiece(*bestmove)
-            
-            time.sleep(0.4)
+        
+        if self.hasOponentMoved() or keyboard.is_pressed('e'):
+            self.findBoard()
+            fen = self.getBoardAsFen()
+            self.game.set_fen_position(fen)
+            print(self.game.get_board_visual())
+            movestring = self.game.get_best_move()
+            print(movestring)
+            print('before')
+            print(self.game.get_evaluation())
+            print('after')
+            bestmove = convertMoveStringHTML(movestring)
+            print(bestmove)
+            self.movePiece(*bestmove)
+        
+        time.sleep(0.4)
 
     def getStats(self):
         wdl = self.game.get_wdl_stats()
