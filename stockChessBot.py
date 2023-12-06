@@ -28,11 +28,11 @@ from selenium.webdriver.common.by import By
 import keyboard
 from selenium.webdriver.common.action_chains import ActionChains
 import os
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 
-load_dotenv()  # take environment variables from .env.
+config = dotenv_values(".env")
 
-stockfish_path = os.environ.get('stockfish_path')
+stockfish_path = config['stockfish_path']
 
 
 BOARD_IMG = './bot_assets/board.png'
@@ -298,8 +298,8 @@ class BoardHTML(webdriver.Chrome):
 
     def login(self):
         self.get("https://www.chess.com/login")
-        self.find_element(By.ID, "username").send_keys(os.environ.get('username'))
-        self.find_element(By.ID, "password").send_keys(os.environ.get('password'))
+        self.find_element(By.ID, "username").send_keys(config['username'])
+        self.find_element(By.ID, "password").send_keys(config['password'])
         self.find_element(By.ID, "login").click()
 
     def hasOponentMoved(self):
@@ -352,9 +352,11 @@ class BoardHTML(webdriver.Chrome):
                 fen = self.getBoardAsFen()
                 self.game.set_fen_position(fen)
                 print(self.game.get_board_visual())
-                movestring = self.game.get_best_move_time(1000)
+                movestring = self.game.get_best_move()
                 print(movestring)
-                print(self.game.get_evaluation())
+                print('before')
+                # print(self.game.get_evaluation())
+                print('after')
                 bestmove = convertMoveStringHTML(movestring)
                 print(bestmove)
                 self.movePiece(*bestmove)

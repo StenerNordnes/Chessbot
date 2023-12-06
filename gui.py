@@ -3,17 +3,13 @@ from stockChessBot import BoardHTML
 import stockfish as st
 import os
 import threading
-from dotenv import load_dotenv
 
-load_dotenv()  # take environment variables from .env.
 
-stockfish_path = os.environ.get('stockfish_path')
 
 class ChessBotGUI:
     def __init__(self):
         self.root = tk.CTk()
         self.root.title("StockChessBot")
-        self.game = st.Stockfish(stockfish_path, depth=24, parameters={"Threads": 2, "Minimum Thinking Time": 30})
         self.board = BoardHTML()
         self.playing = False
 
@@ -78,8 +74,6 @@ class ChessBotGUI:
 
         self.root.update_idletasks()
 
-        self.update_labels()
-
 
         # Add more buttons as needed
 
@@ -125,31 +119,35 @@ class ChessBotGUI:
     def set_turnW(self):
         # Code to set turn goes here
         self.board.setTurn('w')
+        self.update_labels()
 
     def set_turnB(self):
         self.board.setTurn('b')
+        self.update_labels()
 
     def login(self):
         self.board.login()
 
     def update_castlingK(self):
         self.board.updateCastlingRights(0)
+        self.update_labels()
 
     def update_castlingQ(self):
         self.board.updateCastlingRights(1)
+        self.update_labels()
 
     def update_castlingk(self):
         self.board.updateCastlingRights(2)
+        self.update_labels()
 
     def update_castlingq(self):
         self.board.updateCastlingRights(3)
+        self.update_labels()
 
     def update_labels(self):
         self.castling_rights_label.configure(text="Castling Rights: " + self.board.castlingString)
         self.turn_label.configure(text="Turn: " + self.board.turn)
         self.display_stats_label.configure(text="Display Stats: " + str(self.board.getStats()))
-
-        self.root.after(1000, self.update_labels)
 
 if __name__ == "__main__":
     gui = ChessBotGUI()
