@@ -1,1 +1,4 @@
 .env
+/Sjakkbot/*
+/__pycache__/*
+/stockfish-windows-x86-64/*

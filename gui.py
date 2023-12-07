@@ -34,6 +34,11 @@ class ChessBotGUI:
         self.display_stats_label = tk.CTkLabel(self.variables_frame, text="Display Stats: " + str(self.board.getStats()))
         self.display_stats_label.pack()
 
+        # Skill Level Slider
+        self.skill_level = tk.IntVar(value=20)
+        self.skill_slider = tk.CTkSlider(self.variables_frame, from_=1, to=20, variable=self.skill_level)
+        self.skill_slider.pack(pady=10)
+        self.skill_slider.bind("<B1-Motion>", self.set_skill)
 
 
         # Add more labels/buttons as needed
@@ -103,17 +108,20 @@ class ChessBotGUI:
         self.board.endGame()
         self.playing_label.configure(text="Playing: "+ str(self.playing))
 
-    def set_skill(self):
-        self.skill_level = tk.StringVar()
-        self.skill_entry = tk.CTkEntry(self.root, textvariable=self.skill_level)
-        self.skill_entry.pack()
-        self.skill_button = tk.CTkButton(self.root, text="Set Skill", command=self.update_skill)
-        self.skill_button.pack()
+    # def up_skill(self, val):
+    #     self.board.setSkillLevel(int(val))
+    #     self.skill_label.configure(text="Skill Level: " + str(self.board.skillLevel))
+    #     print("Skill level set to " + str(self.board.skillLevel))
+    #     self.update_labels()
 
-    def update_skill(self):
+        
+
+
+    def set_skill(self, event=None):
         skill = self.skill_level.get()
         if skill.isdigit():
             self.board.setSkillLevel(int(skill))
+            
         else:
             print("Invalid skill level")
 
