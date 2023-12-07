@@ -3,17 +3,12 @@ from stockChessBot import BoardHTML
 import stockfish as st
 import os
 import threading
-from dotenv import load_dotenv
 
-load_dotenv()  # take environment variables from .env.
-
-stockfish_path = os.environ.get('stockfish_path')
 
 class ChessBotGUI:
     def __init__(self):
         self.root = tk.CTk()
         self.root.title("StockChessBot")
-        self.game = st.Stockfish(stockfish_path, depth=24, parameters={"Threads": 2, "Minimum Thinking Time": 30})
         self.board = BoardHTML()
         self.playing = False
 
@@ -34,17 +29,31 @@ class ChessBotGUI:
         self.display_stats_label = tk.CTkLabel(self.variables_frame, text="Display Stats: " + str(self.board.getStats()))
         self.display_stats_label.pack()
 
+        # Skill Level Slider
+        self.skill_level = tk.IntVar(value=20)
+        self.skill_slider = tk.CTkSlider(self.variables_frame, from_=1, to=20, variable=self.skill_level)
+        self.skill_slider.pack(pady=10)
+        self.skill_slider.bind("<B1-Motion>", self.update_skill)
 
+        self.display_skill = tk.CTkLabel(self.variables_frame, text="Display Stats: Skill Level " + str(self.skill_level.get()))
+        self.display_skill.pack()
 
         # Add more labels/buttons as needed
+
+                # Create a progress ba
+        self.progress_bar_percentage = tk.IntVar(value=0)
+        self.progress_bar = tk.CTkProgressBar(self.variables_frame, variable= self.progress_bar_percentage, orientation='horizontal', mode='determinate')
+        self.progress_bar.pack()
+
+        # Update the progress bar label
+        self.progress_label = tk.CTkLabel(self.variables_frame, text=f"{self.progress_bar_percentage.get()}%")
+        self.progress_label.pack()
+        self.display_stats_label.pack()
 
         # Start Game button
         self.start_button = tk.CTkButton(self.root, text="Start Game", command=self.start_game_thread)
         self.start_button.pack(pady=10)
 
-        # Set Skill button
-        self.skill_button = tk.CTkButton(self.root, text="Set Skill", command=self.set_skill)
-        self.skill_button.pack(pady=10)
 
         # Set Turn button
         self.turn_buttonW = tk.CTkButton(self.root, text="Set Turn white", command=self.set_turnW)
@@ -54,31 +63,29 @@ class ChessBotGUI:
 
         # Login button
         self.login_button = tk.CTkButton(self.root, text="Login", command=self.login)
-        self.login_button.pack(pady = 10)
+        self.login_button.pack(pady=10)
 
         # Update castling K button
         self.update_castlingK_button = tk.CTkButton(self.root, text="Update castling K", command=self.update_castlingK)
-        self.update_castlingK_button.pack(pady = 10)
+        self.update_castlingK_button.pack(pady=10)
 
         # Update castling Q button
         self.update_castlingQ_button = tk.CTkButton(self.root, text="Update castling Q", command=self.update_castlingQ)
-        self.update_castlingQ_button.pack(pady = 10)
+        self.update_castlingQ_button.pack(pady=10)
 
         # Update castling k button
         self.update_castlingk_button = tk.CTkButton(self.root, text="Update castling k", command=self.update_castlingk)
-        self.update_castlingk_button.pack(pady = 10)
+        self.update_castlingk_button.pack(pady=10)
 
         # Update castling q button
         self.update_castlingq_button = tk.CTkButton(self.root, text="Update castling q", command=self.update_castlingq)
-        self.update_castlingq_button.pack(pady = 10)
+        self.update_castlingq_button.pack(pady=10)
 
         # End game button
         self.end_button = tk.CTkButton(self.root, text="End Game", command=self.end_button)
         self.end_button.pack(pady=10)
 
         self.root.update_idletasks()
-        # Add more buttons as needed
-
         self.root.mainloop()
 
     def start_game(self):
@@ -87,7 +94,7 @@ class ChessBotGUI:
         while self.playing:
             try:
                 self.board.play()
-                
+
             except st.models.StockfishException as e:
                 print(e)
                 self.board.resetStockfish()
@@ -104,16 +111,10 @@ class ChessBotGUI:
         self.board.endGame()
         self.playing_label.configure(text="Playing: "+ str(self.playing))
 
-    def set_skill(self):
-        self.skill_level = tk.StringVar()
-        self.skill_entry = tk.CTkEntry(self.root, textvariable=self.skill_level)
-        self.skill_entry.pack()
-        self.skill_button = tk.CTkButton(self.root, text="Set Skill", command=self.update_skill)
-        self.skill_button.pack()
-
-    def update_skill(self):
+    def update_skill(self, event=None):
+        self.display_skill.configure(text="Display Stats: Skill Level " + str(self.skill_level.get()))
         skill = self.skill_level.get()
-        if skill.isdigit():
+        if skill >= 1 and skill <= 20:
             self.board.setSkillLevel(int(skill))
         else:
             print("Invalid skill level")
@@ -144,6 +145,7 @@ class ChessBotGUI:
         self.castling_rights_label.configure(text="Castling Rights: " + self.board.castlingString)
         self.turn_label.configure(text="Turn: " + self.board.turn)
         self.display_stats_label.configure(text="Display Stats: " + str(self.board.getStats()))
+        # self.progress_bar_percentage = tk.IntVar(value= self.board.getStats()['wdl'][0]) 
 
         self.root.after(1000, self.update_labels)
 
