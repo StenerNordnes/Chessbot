@@ -4,6 +4,9 @@ import stockfish as st
 import os
 import threading
 
+tk.set_appearance_mode("dark")
+
+
 
 class ChessBotGUI:
     def __init__(self):
@@ -54,6 +57,12 @@ class ChessBotGUI:
         self.start_button = tk.CTkButton(self.root, text="Start Game", command=self.start_game_thread)
         self.start_button.pack(pady=10)
 
+        # Set Skill button
+        self.skill_level = tk.StringVar()
+        self.skill_entry = tk.CTkEntry(self.root, textvariable=self.skill_level)
+        self.skill_entry.pack()
+        self.skill_button = tk.CTkButton(self.root, text="Set Skill", command=self.set_skill)
+        self.skill_button.pack(pady=10)
 
         # Set Turn button
         self.turn_buttonW = tk.CTkButton(self.root, text="Set Turn white", command=self.set_turnW)
@@ -85,6 +94,11 @@ class ChessBotGUI:
         self.end_button = tk.CTkButton(self.root, text="End Game", command=self.end_button)
         self.end_button.pack(pady=10)
 
+        # set skill slider
+        # self.skill_slider = tk.CTkSlider(self.root, from_=0, to=20, command=self.up_skill)
+        # self.skill_slider.pack()
+
+
         self.root.update_idletasks()
         self.root.mainloop()
 
@@ -94,7 +108,8 @@ class ChessBotGUI:
         while self.playing:
             try:
                 self.board.play()
-
+                self.display_stats_label.configure(text="Display Stats: " + str(self.board.getStats()))
+                
             except st.models.StockfishException as e:
                 print(e)
                 self.board.resetStockfish()
@@ -108,46 +123,57 @@ class ChessBotGUI:
 
     def end_button(self):
         self.playing = False
-        self.board.endGame()
         self.playing_label.configure(text="Playing: "+ str(self.playing))
 
-    def update_skill(self, event=None):
-        self.display_skill.configure(text="Display Stats: Skill Level " + str(self.skill_level.get()))
+    # def up_skill(self, val):
+    #     self.board.setSkillLevel(int(val))
+    #     self.skill_label.configure(text="Skill Level: " + str(self.board.skillLevel))
+    #     print("Skill level set to " + str(self.board.skillLevel))
+    #     self.update_labels()
+
+        
+
+
+    def set_skill(self):
         skill = self.skill_level.get()
         if skill >= 1 and skill <= 20:
             self.board.setSkillLevel(int(skill))
+            self.skill_label.configure(text="Skill Level: " + str(self.board.skillLevel))
+            
         else:
             print("Invalid skill level")
 
     def set_turnW(self):
-        self.update_labels()
+        # Code to set turn goes here
         self.board.setTurn('w')
+        self.turn_label.configure(text="Turn: " + self.board.turn)
 
     def set_turnB(self):
         self.board.setTurn('b')
+        self.turn_label.configure(text="Turn: " + self.board.turn)
 
     def login(self):
         self.board.login()
 
     def update_castlingK(self):
         self.board.updateCastlingRights(0)
+        self.castling_rights_label.configure(text="Castling Rights: " + self.board.castlingString)
 
     def update_castlingQ(self):
         self.board.updateCastlingRights(1)
+        self.castling_rights_label.configure(text="Castling Rights: " + self.board.castlingString)
 
     def update_castlingk(self):
         self.board.updateCastlingRights(2)
+        self.castling_rights_label.configure(text="Castling Rights: " + self.board.castlingString)
 
     def update_castlingq(self):
         self.board.updateCastlingRights(3)
-
-    def update_labels(self):
         self.castling_rights_label.configure(text="Castling Rights: " + self.board.castlingString)
         self.turn_label.configure(text="Turn: " + self.board.turn)
         self.display_stats_label.configure(text="Display Stats: " + str(self.board.getStats()))
         # self.progress_bar_percentage = tk.IntVar(value= self.board.getStats()['wdl'][0]) 
 
-        self.root.after(1000, self.update_labels)
-
+    
 if __name__ == "__main__":
     gui = ChessBotGUI()
