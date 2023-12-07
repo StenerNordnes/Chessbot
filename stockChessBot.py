@@ -25,7 +25,6 @@ from skimage.metrics import structural_similarity as ssim
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-import keyboard
 from selenium.webdriver.common.action_chains import ActionChains
 import os
 from dotenv import dotenv_values
@@ -206,8 +205,8 @@ class BoardHTML(webdriver.Chrome):
         self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
 
 
-        def __del__(self):
-            self.quit()
+    def __del__(self):
+        self.quit()
 
     def findBoard(self):
         """
@@ -350,21 +349,19 @@ class BoardHTML(webdriver.Chrome):
     
 
 
-    def play(self):    
-        
-        if self.hasOponentMoved() or keyboard.is_pressed('e'):
-            self.findBoard()
-            fen = self.getBoardAsFen()
-            self.game.set_fen_position(fen)
-            print(self.game.get_board_visual())
-            movestring = self.game.get_best_move()
-            print(movestring)
-            print('before')
-            print(self.game.get_evaluation())
-            print('after')
-            bestmove = convertMoveStringHTML(movestring)
-            print(bestmove)
-            self.movePiece(*bestmove)
+    def play(self):            
+        self.findBoard()
+        fen = self.getBoardAsFen()
+        self.game.set_fen_position(fen)
+        print(self.game.get_board_visual())
+        movestring = self.game.get_best_move()
+        print(movestring)
+        print('before')
+        print(self.game.get_evaluation())
+        print('after')
+        bestmove = convertMoveStringHTML(movestring)
+        print(bestmove)
+        self.movePiece(*bestmove)
         
         time.sleep(0.4)
 

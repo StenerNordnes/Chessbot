@@ -3,8 +3,10 @@ from stockChessBot import BoardHTML
 import stockfish as st
 import os
 import threading
+import keyboard
 
 tk.set_appearance_mode("dark")
+
 
 
 
@@ -29,40 +31,39 @@ class ChessBotGUI:
         self.playing_label = tk.CTkLabel(self.variables_frame, text="Playing: " + str(self.playing))
         self.playing_label.pack()
 
-        self.display_stats_label = tk.CTkLabel(self.variables_frame, text="Display Stats: " + str(self.board.getStats()))
-        self.display_stats_label.pack()
+
+        
+        class DisplayStats:
+            def __init__(self, variables_frame):
+                self.variables_frame = variables_frame
+                self.display_stats_label = tk.CTkLabel(self.variables_frame, text="")
+                self.display_stats_label.pack()
+
+            def present_stats(self, stats):
+                self.display_stats_label.configure(text="W: {}, D: {}, L: {}".format(*stats))
+
+        self.display_stats = DisplayStats(self.variables_frame)
+
 
         # Skill Level Slider
         self.skill_level = tk.IntVar(value=20)
         self.skill_slider = tk.CTkSlider(self.variables_frame, from_=1, to=20, variable=self.skill_level)
         self.skill_slider.pack(pady=10)
-        self.skill_slider.bind("<B1-Motion>", self.update_skill)
-
-        self.display_skill = tk.CTkLabel(self.variables_frame, text="Display Stats: Skill Level " + str(self.skill_level.get()))
+        self.skill_slider.bind("<B1-Motion>", self.set_skill)
+        self.display_skill = tk.CTkLabel(self.variables_frame, text="Skill Level " + str(self.skill_level.get()))
         self.display_skill.pack()
 
-        # Add more labels/buttons as needed
 
-                # Create a progress ba
-        self.progress_bar_percentage = tk.IntVar(value=0)
-        self.progress_bar = tk.CTkProgressBar(self.variables_frame, variable= self.progress_bar_percentage, orientation='horizontal', mode='determinate')
+        # Create a progress ba
+        self.progress_bar = tk.CTkProgressBar(self.variables_frame, orientation='horizontal', mode='determinate')
         self.progress_bar.pack()
-
-        # Update the progress bar label
-        self.progress_label = tk.CTkLabel(self.variables_frame, text=f"{self.progress_bar_percentage.get()}%")
+        self.progress_label = tk.CTkLabel(self.variables_frame, text=f"{self.progress_bar.get()}%")
         self.progress_label.pack()
-        self.display_stats_label.pack()
+
 
         # Start Game button
         self.start_button = tk.CTkButton(self.root, text="Start Game", command=self.start_game_thread)
         self.start_button.pack(pady=10)
-
-        # Set Skill button
-        self.skill_level = tk.StringVar()
-        self.skill_entry = tk.CTkEntry(self.root, textvariable=self.skill_level)
-        self.skill_entry.pack()
-        self.skill_button = tk.CTkButton(self.root, text="Set Skill", command=self.set_skill)
-        self.skill_button.pack(pady=10)
 
         # Set Turn button
         self.turn_buttonW = tk.CTkButton(self.root, text="Set Turn white", command=self.set_turnW)
@@ -94,21 +95,29 @@ class ChessBotGUI:
         self.end_button = tk.CTkButton(self.root, text="End Game", command=self.end_button)
         self.end_button.pack(pady=10)
 
-        # set skill slider
-        # self.skill_slider = tk.CTkSlider(self.root, from_=0, to=20, command=self.up_skill)
-        # self.skill_slider.pack()
-
 
         self.root.update_idletasks()
         self.root.mainloop()
 
+
+    def __del__(self):
+        self.board.quit()
+
+
     def start_game(self):
         self.playing = True
         self.playing_label.configure(text="Playing: " + str(self.playing))
+
+        if self.board.turn == 'w':
+            self.board.play()
+
         while self.playing:
             try:
-                self.board.play()
-                self.display_stats_label.configure(text="Display Stats: " + str(self.board.getStats()))
+                if self.board.hasOponentMoved() or keyboard.is_pressed('e'):
+                    self.board.play()
+                    self.update_stats()
+                    self.progress_bar.set(self.board.getStats()['wdl'][0]/1000)
+                    self.progress_label.configure(text=f"{self.progress_bar.get()*100}%")
                 
             except st.models.StockfishException as e:
                 print(e)
@@ -116,6 +125,11 @@ class ChessBotGUI:
             except Exception as e:
                 print(e.with_traceback())
                 break
+
+
+    def update_stats(self):
+        # self.display_stats_label.configure(text="Display Stats: " + str(self.board.getStats()))
+        self.display_stats.present_stats(self.board.getStats()['wdl'])
 
     def start_game_thread(self):
         self.thread = threading.Thread(target=self.start_game)
@@ -125,20 +139,12 @@ class ChessBotGUI:
         self.playing = False
         self.playing_label.configure(text="Playing: "+ str(self.playing))
 
-    # def up_skill(self, val):
-    #     self.board.setSkillLevel(int(val))
-    #     self.skill_label.configure(text="Skill Level: " + str(self.board.skillLevel))
-    #     print("Skill level set to " + str(self.board.skillLevel))
-    #     self.update_labels()
 
-        
-
-
-    def set_skill(self):
+    def set_skill(self, event=None):
         skill = self.skill_level.get()
         if skill >= 1 and skill <= 20:
             self.board.setSkillLevel(int(skill))
-            self.skill_label.configure(text="Skill Level: " + str(self.board.skillLevel))
+            self.display_skill.configure(text="Skill Level: " + str(self.board.skillLevel))
             
         else:
             print("Invalid skill level")
@@ -174,6 +180,8 @@ class ChessBotGUI:
         self.display_stats_label.configure(text="Display Stats: " + str(self.board.getStats()))
         # self.progress_bar_percentage = tk.IntVar(value= self.board.getStats()['wdl'][0]) 
 
-    
+
+
+
 if __name__ == "__main__":
     gui = ChessBotGUI()
