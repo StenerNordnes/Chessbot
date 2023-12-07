@@ -28,11 +28,11 @@ from selenium.webdriver.common.by import By
 import keyboard
 from selenium.webdriver.common.action_chains import ActionChains
 import os
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 
-load_dotenv()  # take environment variables from .env.
+config = dotenv_values(".env")
 
-stockfish_path = os.environ.get('stockfish_path')
+stockfish_path = config['stockfish_path']
 
 
 BOARD_IMG = './bot_assets/board.png'
@@ -164,7 +164,6 @@ class BoardVisual():
         else:
             return similarity_array.argmax() +1
 
-
     def initialize_images(self):
         return
         for i in range(8):
@@ -205,6 +204,10 @@ class BoardHTML(webdriver.Chrome):
         self.get("https://www.chess.com/play/computer")
         self.playing = False
         self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
+
+
+        def __del__(self):
+            self.quit()
 
     def findBoard(self):
         """
@@ -298,9 +301,12 @@ class BoardHTML(webdriver.Chrome):
 
     def login(self):
         self.get("https://www.chess.com/login")
-        self.find_element(By.ID, "username").send_keys(os.environ.get('username'))
-        self.find_element(By.ID, "password").send_keys(os.environ.get('password'))
+        self.find_element(By.ID, "username").send_keys(config['username'])
+        self.find_element(By.ID, "password").send_keys(config['password'])
         self.find_element(By.ID, "login").click()
+
+
+
 
     def hasOponentMoved(self):
         new = self.getBoardAsFen()
@@ -345,21 +351,22 @@ class BoardHTML(webdriver.Chrome):
 
 
     def play(self):    
-        self.playing = True
-        while self.playing:
-            if self.hasOponentMoved() or keyboard.is_pressed('e'):
-                self.findBoard()
-                fen = self.getBoardAsFen()
-                self.game.set_fen_position(fen)
-                print(self.game.get_board_visual())
-                movestring = self.game.get_best_move_time(1000)
-                print(movestring)
-                print(self.game.get_evaluation())
-                bestmove = convertMoveStringHTML(movestring)
-                print(bestmove)
-                self.movePiece(*bestmove)
-            
-            time.sleep(0.4)
+        
+        if self.hasOponentMoved() or keyboard.is_pressed('e'):
+            self.findBoard()
+            fen = self.getBoardAsFen()
+            self.game.set_fen_position(fen)
+            print(self.game.get_board_visual())
+            movestring = self.game.get_best_move()
+            print(movestring)
+            print('before')
+            print(self.game.get_evaluation())
+            print('after')
+            bestmove = convertMoveStringHTML(movestring)
+            print(bestmove)
+            self.movePiece(*bestmove)
+        
+        time.sleep(0.4)
 
     def getStats(self):
         wdl = self.game.get_wdl_stats()
