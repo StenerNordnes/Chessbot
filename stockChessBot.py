@@ -18,6 +18,7 @@ import stockfish as st
 import pyautogui as p
 from PIL import Image
 import imagehash
+import re
 import cv2
 import numpy as np
 from pyscreeze import Box
@@ -27,14 +28,17 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 import os
+import sys
 from dotenv import dotenv_values
-# import chess
-# import chess.pgn
-# from io import StringIO
 
 config = dotenv_values(".env")
 
-stockfish_path = config['stockfish_path']
+
+# Check if we're running in a PyInstaller bundle
+if getattr(sys, 'frozen', False):
+    stockfish_path = os.path.join(sys._MEIPASS, 'stockfish')
+else:
+    stockfish_path = config['stockfish_path']
 
 
 BOARD_IMG = './bot_assets/board.png'
@@ -79,10 +83,6 @@ def convertMoveStringHTML(moveString):
     char_list[2] = int(ord(char_list[2]) - ord('a'))
     char_list[3] = 8 - int(char_list[3])
     return [char_list[0], char_list[1], char_list[2], char_list[3]]
-
-
-
-
 
 
 class BoardVisual():
@@ -211,7 +211,6 @@ class BoardHTML(webdriver.Chrome):
         self.playing = False
         self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
 
-
     def __del__(self):
         self.quit()
 
@@ -222,7 +221,6 @@ class BoardHTML(webdriver.Chrome):
         svg_element = self.find_element(By.CLASS_NAME,"coordinates")
         self.location = svg_element.location
         self.size = svg_element.size
-
 
     def getBoardAsFen(self):
         """
@@ -239,22 +237,23 @@ class BoardHTML(webdriver.Chrome):
         b = [['_' for _ in range(8)] for _ in range(8)]
 
         for element in elements:
-            try:
-                attr = element.get_attribute("class")
+            attr = element.get_attribute("class")
+            if attr.find('square') == -1:
+                continue
 
-                if attr.find('square') == -1:
-                    continue
+            # _, piece, pos = attr.split()
+            # _,pos = pos.split('-')
+            # pos = list(pos)
 
-                _, piece, pos = attr.split()
-                _,pos = pos.split('-')
-                pos = list(pos)
-                x = int(pos[0])-1
-                y = 8 - int(pos[1])
+            pos = re.search(r'square-(\d+)', attr).group(1)
+            piece = re.findall(r'[bw][a-z]', attr)[0].strip()
 
-                b[y][x] = piece_mapping[piece]
-            except AttributeError:
-                print('Game ended from error')
-                self.endGame()
+
+            x = int(pos[0])-1
+            y = 8 - int(pos[1])
+
+            b[y][x] = piece_mapping[piece]
+            
         fen = ''
         for row in b:
             empty_count = 0
@@ -309,29 +308,7 @@ class BoardHTML(webdriver.Chrome):
         self.CastlingUpdate()
         self.previousFen = self.getBoardAsFen()
                     
-        
-
-        
-
     def CastlingUpdate(self):
-        # Find the piece that is being moved (is it a pawn, knight, bishop, rook, queen, or king?)
-        # startPos = moveString[:2]
-
-        # if startPos== 'e1':
-        #     self.castlingRights[0] = False
-        #     self.castlingRights[1] = False
-        # if startPos == 'e8':
-        #     self.castlingRights[2] = False
-        #     self.castlingRights[3] = False
-        # if startPos == 'a1':
-        #     self.castlingRights[1] = False
-        # if startPos == 'h1':
-        #     self.castlingRights[0] = False
-        # if startPos == 'a8':
-        #     self.castlingRights[3] = False
-        # if startPos == 'h8':
-        #     self.castlingRights[2] = False
-
         currentFen = self.getBoardAsFen()
         board1 = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
         board2 = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
@@ -353,15 +330,8 @@ class BoardHTML(webdriver.Chrome):
             self.castlingRights[3] = False
         elif board1.get_what_is_on_square('h8') != board2.get_what_is_on_square('h8'):
             self.castlingRights[2] = False
-        
-        
-        
 
         self.updateCastlingString()
-
-
-
-        
 
     def login(self):
         self.get("https://www.chess.com/login")
@@ -408,8 +378,6 @@ class BoardHTML(webdriver.Chrome):
         self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
         print('Stockfish restarted')
     
-
-
     def play(self):            
         self.findBoard()
         fen = self.getBoardAsFen()

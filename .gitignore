@@ -3,5 +3,7 @@ __pycache__/
 /Sjakkbot/*
 /.venv/*
 /stockfish-windows-x86-64
+/dist/*
+/build/*
 
 
