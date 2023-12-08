@@ -304,9 +304,6 @@ class BoardHTML(webdriver.Chrome):
         self.find_element(By.ID, "password").send_keys(config['password'])
         self.find_element(By.ID, "login").click()
 
-
-
-
     def hasOponentMoved(self):
         new = self.getBoardAsFen()
         if new != self.previousFen:
@@ -333,8 +330,6 @@ class BoardHTML(webdriver.Chrome):
         if not self.castlingString:
             self.castlingString = '-'
         
-        
-    
     def setSkillLevel(self, level):
         self.skillLevel = level
         self.game.set_skill_level(level)
@@ -364,6 +359,8 @@ class BoardHTML(webdriver.Chrome):
         self.movePiece(*bestmove)
         
         time.sleep(0.4)
+
+        return movestring
 
     def getStats(self):
         wdl = self.game.get_wdl_stats()
