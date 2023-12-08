@@ -339,16 +339,16 @@ class BoardHTML(webdriver.Chrome):
         if board1.get_what_is_on_square('e1') != board2.get_what_is_on_square('e1'):
             self.castlingRights[0] = False
             self.castlingRights[1] = False
-        if board1.get_what_is_on_square('e8') != board2.get_what_is_on_square('e8'):
+        elif board1.get_what_is_on_square('e8') != board2.get_what_is_on_square('e8'):
             self.castlingRights[2] = False
             self.castlingRights[3] = False
-        if board1.get_what_is_on_square('a1') != board2.get_what_is_on_square('a1'):
+        elif board1.get_what_is_on_square('a1') != board2.get_what_is_on_square('a1'):
             self.castlingRights[1] = False
-        if board1.get_what_is_on_square('h1') != board2.get_what_is_on_square('h1'):
+        elif board1.get_what_is_on_square('h1') != board2.get_what_is_on_square('h1'):
             self.castlingRights[0] = False
-        if board1.get_what_is_on_square('a8') != board2.get_what_is_on_square('a8'):
+        elif board1.get_what_is_on_square('a8') != board2.get_what_is_on_square('a8'):
             self.castlingRights[3] = False
-        if board1.get_what_is_on_square('h8') != board2.get_what_is_on_square('h8'):
+        elif board1.get_what_is_on_square('h8') != board2.get_what_is_on_square('h8'):
             self.castlingRights[2] = False
         
         
@@ -365,9 +365,6 @@ class BoardHTML(webdriver.Chrome):
         self.find_element(By.ID, "username").send_keys(config['username'])
         self.find_element(By.ID, "password").send_keys(config['password'])
         self.find_element(By.ID, "login").click()
-
-
-
 
     def hasOponentMoved(self):
         new = self.getBoardAsFen()
@@ -396,8 +393,6 @@ class BoardHTML(webdriver.Chrome):
         if not self.castlingString:
             self.castlingString = '-'
         
-        
-    
     def setSkillLevel(self, level):
         self.skillLevel = level
         self.game.set_skill_level(level)
@@ -428,6 +423,8 @@ class BoardHTML(webdriver.Chrome):
         self.movePiece(*bestmove)
         
         time.sleep(0.1)
+
+        return movestring
 
     def getStats(self):
         wdl = self.game.get_wdl_stats()
