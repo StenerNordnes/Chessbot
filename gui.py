@@ -111,6 +111,8 @@ class ChessBotGUI:
         tk.CTkButton(buttons_frame, text="Update castling Q", command=self.update_castlingQ).grid(row=3, column=0, pady=10, padx=5)
         tk.CTkButton(buttons_frame, text="Update castling k", command=self.update_castlingk).grid(row=3, column=1, pady=10, padx=5)
         tk.CTkButton(buttons_frame, text="Update castling q", command=self.update_castlingq).grid(row=4, column=0, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text = "Identify Turn", command = self.board.identifyTurn).grid(row=4, column=1, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text = "New Game", command = self.board.newGame).grid(row=5, column=0, pady=10, padx=5)
 
         self.root.update_idletasks()
         self.root.mainloop()

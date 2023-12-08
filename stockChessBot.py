@@ -34,40 +34,10 @@ config = dotenv_values(".env")
 
 stockfish_path = config['stockfish_path']
 
-
-BOARD_IMG = './bot_assets/board.png'
-
-PIECE_NAME = {
-    0:'_',
-    1:'P',
-    2:'R',
-    3:'N',
-    4:'B',
-    5:'Q',
-    6:'K',
-    7:'p',
-    8:'r',
-    9:'n',
-    10:'b',
-    11:'q',
-    12:'k'
-}
-
-
 piece_mapping = {
     'br': 'r', 'bn': 'n', 'bb': 'b', 'bk': 'k', 'bq': 'q', 'bp': 'p',
     'wr': 'R', 'wn': 'N', 'wb': 'B', 'wk': 'K', 'wq': 'Q', 'wp': 'P'
 }
-
-def convertMoveString(moveString):
-    char_list = list(moveString)
-
-    char_list[0] = int(ord(char_list[0]) - ord('a'))
-    char_list[1] = 8 - int(char_list[1])
-    char_list[2] = int(ord(char_list[2]) - ord('a'))
-    char_list[3] = 8 - int(char_list[3])
-    return [char_list[1], char_list[0], char_list[3], char_list[2]]
-
 
 def convertMoveStringHTML(moveString):
     char_list = list(moveString)
@@ -79,108 +49,6 @@ def convertMoveStringHTML(moveString):
     return [char_list[0], char_list[1], char_list[2], char_list[3]]
 
 
-
-
-
-
-class BoardVisual():
-    def __init__(self, boundingBox) -> None:
-        self.height = boundingBox.height
-        self.width =  boundingBox.width
-        self.left =  boundingBox.left
-        self.top = boundingBox.top
-
-        self.pos_array = []
-        self.piece_array = np.zeros([8,8], dtype=str)
-
-        self.Wdx = boundingBox.width//8
-        self.Hdx = boundingBox.height//8
-
-        tempArray = []
-
-        for i in range(8):
-            tempArray = []
-            for j in range(8):
-                tempArray.append((j*self.Wdx + boundingBox.left, i*self.Hdx + boundingBox.top))
-
-            self.pos_array.append(tempArray)
-
-    def get_fenString(self, turn):
-        fen = ''
-        for row in self.piece_array:
-            empty_count = 0
-            for square in row:
-                if square == '_':
-                    empty_count += 1
-                else:
-                    if empty_count > 0:
-                        fen += str(empty_count)
-                        empty_count = 0
-                    fen += square
-            if empty_count > 0:
-                fen += str(empty_count)
-            fen += '/'
-
-        # Remove the trailing '/'
-        fen = fen[:-1]
-
-        return fen +' '+ turn
-
-    def screenTiles(self,name,x,y):
-        p.screenshot(name, (self.pos_array[x][y][0],self.pos_array[x][y][1], self.Wdx, self.Hdx)) #left, top, width, height
-
-    def move_piece(self, x, y, target_x, target_y):
-
-        centerX = self.pos_array[x][y][0] + self.Wdx//2
-        centerY = self.pos_array[x][y][1] + self.Hdx//2
-
-        print(centerX, centerY)
-
-        p.click(centerX, centerY)
-
-        targetCenterX = self.pos_array[target_x][target_y][0] + self.Wdx//2
-        targetCenterY = self.pos_array[target_x][target_y][1] + self.Hdx//2
-
-        p.click(targetCenterX,targetCenterY) 
-        p.moveTo(10,10)        
-
-    def identify_tile(self):
-        # Load images
-        temp_image = cv2.imread('temp_tile.png', cv2.IMREAD_GRAYSCALE)
-        similarity_array = np.zeros(12)
-
-        # Apply Canny edge detection to extract outlines
-        temp_edges = cv2.Canny(temp_image, 50, 150)
-
-        for i in range(12):
-            baseline_image = cv2.imread(f'./bot_assets/{i+1}.png', cv2.IMREAD_GRAYSCALE)
-            
-            # Apply Canny edge detection to the baseline image
-            baseline_edges = cv2.Canny(baseline_image, 50, 150)
-
-            # Compare outlines using SSIM
-            similarity = ssim(temp_edges, baseline_edges)
-            similarity_array[i] = similarity
-
-
-        if similarity_array.max() <=0.7:
-            return 0
-        else:
-            return similarity_array.argmax() +1
-
-    def initialize_images(self):
-        return
-        for i in range(8):
-            for j in range(8):
-                self.screenTiles(f'./bot_assets/{i}{j}.png', i,j)
-
-    def fill_pieces(self):
-        for i in range(8):
-            for j in range(8):
-                self.screenTiles('temp_tile.png',i,j)
-                pieceNum = int(self.identify_tile())
-                self.piece_array[i,j] = PIECE_NAME[pieceNum]
-                
 
 class BoardHTML(webdriver.Chrome):
     """
@@ -208,7 +76,6 @@ class BoardHTML(webdriver.Chrome):
         self.get("https://www.chess.com/play/computer")
         self.playing = False
 
-
     def __del__(self):
         self.quit()
 
@@ -219,7 +86,6 @@ class BoardHTML(webdriver.Chrome):
         svg_element = self.find_element(By.CLASS_NAME,"coordinates")
         self.location = svg_element.location
         self.size = svg_element.size
-
 
     def getBoardAsFen(self):
         """
@@ -305,31 +171,11 @@ class BoardHTML(webdriver.Chrome):
         actions.perform()
         self.CastlingUpdate()
         self.previousFen = self.getBoardAsFen()
-                    
-        
+                           
     def initializeStockfish(self):
         self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
 
-        
-
     def CastlingUpdate(self):
-        # Find the piece that is being moved (is it a pawn, knight, bishop, rook, queen, or king?)
-        # startPos = moveString[:2]
-
-        # if startPos== 'e1':
-        #     self.castlingRights[0] = False
-        #     self.castlingRights[1] = False
-        # if startPos == 'e8':
-        #     self.castlingRights[2] = False
-        #     self.castlingRights[3] = False
-        # if startPos == 'a1':
-        #     self.castlingRights[1] = False
-        # if startPos == 'h1':
-        #     self.castlingRights[0] = False
-        # if startPos == 'a8':
-        #     self.castlingRights[3] = False
-        # if startPos == 'h8':
-        #     self.castlingRights[2] = False
 
         currentFen = self.getBoardAsFen()
         board1 = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
@@ -361,10 +207,6 @@ class BoardHTML(webdriver.Chrome):
 
         self.updateCastlingString()
 
-
-
-        
-
     def login(self):
         self.get("https://www.chess.com/login")
         self.find_element(By.ID, "username").send_keys(config['username'])
@@ -372,15 +214,13 @@ class BoardHTML(webdriver.Chrome):
         self.find_element(By.ID, "login").click()
 
     def hasOponentMoved(self):
-        new = self.getBoardAsFen()
+        new = self.getBoardAsFen().split(' ')[0]
         self.CastlingUpdate()
-        if new != self.previousFen:
+        if new != self.previousFen.split(' ')[0]:
             self.previousFen = new
-            time.sleep(0.2)
             return True
         else:
             self.previousFen = new
-            time.sleep(0.2)
             return False
         
     def setTurn(self, turn):
@@ -410,30 +250,45 @@ class BoardHTML(webdriver.Chrome):
         self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
         print('Stockfish restarted')
     
-
-
     def play(self):            
         self.findBoard()
         fen = self.getBoardAsFen()
         self.game.set_fen_position(fen)
         print(self.game.get_board_visual())
+        t1 = time.perf_counter()
         movestring = self.game.get_best_move()
+        t2 = time.perf_counter()
+        print(f"Time taken: {t2-t1:0.4f} seconds")
         print(movestring)
-        print('before')
         print(self.game.get_evaluation())
-        print('after')
         bestmove = convertMoveStringHTML(movestring)
         
         print(bestmove)
         self.movePiece(*bestmove)
-        
-        time.sleep(0.1)
 
         return movestring
 
     def getStats(self):
         wdl = self.game.get_wdl_stats()
         return {"wdl": wdl, **self.game.get_evaluation()}
+
+    def newGame(self):
+        if self.find_elements(By.CSS_SELECTOR, "div[class*=game-over]"):
+            #click new game button
+            self.find_element(By.XPATH, '//button[@data-cy="game-over-modal-new-game-button"]').click()
+
+    def identifyTurn(self):
+        element = self.find_element(By.XPATH, '//wc-chess-board')
+        class_name = element.get_attribute("class")
+        if "board" in class_name and "flipped" not in class_name:
+            turn = "w"
+        elif "board flipped" in class_name:
+            turn = "b"
+            #press x on the keyboard
+            self.find_element(By.XPATH, '//body').send_keys('x')
+            
+        self.setTurn(turn)
+
         
 
 
