@@ -86,7 +86,8 @@ class ChessBotGUI:
                 self.root = root
                 self.text_box = tk.CTkTextbox(self.root)  # Set the state to 'disabled'
                 self.text_box.pack(pady=(0, 10), padx=8)
-                self.lines = []
+                self.lines = ['Stockfish bot started']
+                self.text_box.insert(tk.END, "\n".join(self.lines))
 
             def add_line(self, new_line):
                 self.lines.append(new_line)

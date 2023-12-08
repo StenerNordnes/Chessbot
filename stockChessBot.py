@@ -232,19 +232,22 @@ class BoardHTML(webdriver.Chrome):
         b = [['_' for _ in range(8)] for _ in range(8)]
 
         for element in elements:
-            attr = element.get_attribute("class")
+            try:
+                attr = element.get_attribute("class")
 
-            if attr.find('square') == -1:
-                continue
+                if attr.find('square') == -1:
+                    continue
 
-            _, piece, pos = attr.split()
-            _,pos = pos.split('-')
-            pos = list(pos)
-            x = int(pos[0])-1
-            y = 8 - int(pos[1])
+                _, piece, pos = attr.split()
+                _,pos = pos.split('-')
+                pos = list(pos)
+                x = int(pos[0])-1
+                y = 8 - int(pos[1])
 
-            b[y][x] = piece_mapping[piece]
-
+                b[y][x] = piece_mapping[piece]
+            except AttributeError:
+                print('Game ended from error')
+                self.endGame()
         fen = ''
         for row in b:
             empty_count = 0
