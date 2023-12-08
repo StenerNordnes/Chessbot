@@ -121,10 +121,13 @@ class ChessBotGUI:
 
 
     def start_game(self):
+        self.board.initializeStockfish()
+        self.board.setSkillLevel(int(self.skill_level.get()))
         self.playing = True
         self.text_box.add_line('Game started') 
         self.skill_slider.configure(state='disabled')
         self.playing_value_label.configure(text= 'Playing' if self.playing else 'Idle')
+
 
         if self.board.turn == 'w':
             self.board.play()
@@ -148,7 +151,7 @@ class ChessBotGUI:
                 print(e.with_traceback())
                 self.text_box.add_line('Error: ' + str(e))
                 break
-
+        print('Game ended successfully')
         self.skill_slider.configure(state='enabled')
 
 
@@ -160,7 +163,8 @@ class ChessBotGUI:
         self.thread.start()
 
     def end_button(self):
-        self.playing = False
+        self.skill_slider.configure(state='normal')
+        self.board.endGame()
         self.text_box.add_line('Game ended')
         self.playing_value_label.configure(text="Idle")
 
@@ -168,8 +172,7 @@ class ChessBotGUI:
     def set_skill(self, event=None):
         skill = self.skill_level.get()
         if skill >= 1 and skill <= 20:
-            self.board.setSkillLevel(int(skill))
-            self.display_skill.configure(text="Skill Level: " + str(self.board.skillLevel))
+            self.display_skill.configure(text="Skill Level: " + str(skill))
             
         else:
             print("Invalid skill level")

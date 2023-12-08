@@ -211,6 +211,7 @@ class BoardHTML(webdriver.Chrome):
         self.playing = False
         self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
 
+
     def __del__(self):
         self.quit()
 
@@ -308,6 +309,12 @@ class BoardHTML(webdriver.Chrome):
         self.CastlingUpdate()
         self.previousFen = self.getBoardAsFen()
                     
+        
+    def initializeStockfish(self):
+        self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
+
+        
+
     def CastlingUpdate(self):
         currentFen = self.getBoardAsFen()
         board1 = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
@@ -330,6 +337,12 @@ class BoardHTML(webdriver.Chrome):
             self.castlingRights[3] = False
         elif board1.get_what_is_on_square('h8') != board2.get_what_is_on_square('h8'):
             self.castlingRights[2] = False
+
+        del board1
+        del board2
+        
+        
+        
 
         self.updateCastlingString()
 
@@ -371,7 +384,7 @@ class BoardHTML(webdriver.Chrome):
         self.game.set_skill_level(level)
 
     def endGame(self):
-        self.playing = False
+        del self.game
         print('Game ended')
     
     def resetStockfish(self):
