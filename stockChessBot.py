@@ -18,6 +18,7 @@ import stockfish as st
 import pyautogui as p
 from PIL import Image
 import imagehash
+import re
 import cv2
 import numpy as np
 from pyscreeze import Box
@@ -27,8 +28,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 import os
+import sys
 from dotenv import dotenv_values
-
 
 config = dotenv_values(".env")
 
@@ -102,22 +103,23 @@ class BoardHTML(webdriver.Chrome):
         b = [['_' for _ in range(8)] for _ in range(8)]
 
         for element in elements:
-            try:
-                attr = element.get_attribute("class")
+            attr = element.get_attribute("class")
+            if attr.find('square') == -1:
+                continue
 
-                if attr.find('square') == -1:
-                    continue
+            # _, piece, pos = attr.split()
+            # _,pos = pos.split('-')
+            # pos = list(pos)
 
-                _, piece, pos = attr.split()
-                _,pos = pos.split('-')
-                pos = list(pos)
-                x = int(pos[0])-1
-                y = 8 - int(pos[1])
+            pos = re.search(r'square-(\d+)', attr).group(1)
+            piece = re.findall(r'[bw][a-z]', attr)[0].strip()
 
-                b[y][x] = piece_mapping[piece]
-            except AttributeError:
-                print('Game ended from error')
-                self.endGame()
+
+            x = int(pos[0])-1
+            y = 8 - int(pos[1])
+
+            b[y][x] = piece_mapping[piece]
+            
         fen = ''
         for row in b:
             empty_count = 0
