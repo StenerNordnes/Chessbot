@@ -132,6 +132,7 @@ class ChessBotGUI:
         while self.playing:
             try:
                 if self.board.hasOponentMoved() or keyboard.is_pressed('e'):
+                    self.castling_rights_value_label.configure(text=self.board.castlingString)
                     self.text_box.add_line('Thinking...')
                     movestring = self.board.play()
                     self.text_box.add_line('Move made: ' + movestring)
