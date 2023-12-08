@@ -278,6 +278,8 @@ class BoardHTML(webdriver.Chrome):
         if self.find_elements(By.CSS_SELECTOR, "div[class*=game-over]"):
             #click new game button
             self.find_element(By.XPATH, '//button[@data-cy="game-over-modal-new-game-button"]').click()
+            self.castlingRights = [True, True, True, True]
+            self.castlingString = 'KQkq'
 
     def identifyTurn(self):
         element = self.find_element(By.XPATH, '//wc-chess-board')
