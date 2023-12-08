@@ -116,6 +116,7 @@ class ChessBotGUI:
                 if self.board.hasOponentMoved() or keyboard.is_pressed('e'):
                     self.board.play()
                     self.update_stats()
+                    self.castling_rights_label.configure(text="Castling Rights: " + self.board.castlingString)
                     self.progress_bar.set(self.board.getStats()['wdl'][0]/1000)
                     self.progress_label.configure(text=f"{self.progress_bar.get()*100}%")
                 

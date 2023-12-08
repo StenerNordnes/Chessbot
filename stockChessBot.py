@@ -28,6 +28,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 import os
 from dotenv import dotenv_values
+# import chess
+# import chess.pgn
+# from io import StringIO
 
 config = dotenv_values(".env")
 
@@ -76,6 +79,10 @@ def convertMoveStringHTML(moveString):
     char_list[2] = int(ord(char_list[2]) - ord('a'))
     char_list[3] = 8 - int(char_list[3])
     return [char_list[0], char_list[1], char_list[2], char_list[3]]
+
+
+
+
 
 
 class BoardVisual():
@@ -296,7 +303,62 @@ class BoardHTML(webdriver.Chrome):
         actions.click()
         actions.move_by_offset(-targetCenter_x, -targetCenter_y)
         actions.perform()
+        self.CastlingUpdate()
         self.previousFen = self.getBoardAsFen()
+                    
+        
+
+        
+
+    def CastlingUpdate(self):
+        # Find the piece that is being moved (is it a pawn, knight, bishop, rook, queen, or king?)
+        # startPos = moveString[:2]
+
+        # if startPos== 'e1':
+        #     self.castlingRights[0] = False
+        #     self.castlingRights[1] = False
+        # if startPos == 'e8':
+        #     self.castlingRights[2] = False
+        #     self.castlingRights[3] = False
+        # if startPos == 'a1':
+        #     self.castlingRights[1] = False
+        # if startPos == 'h1':
+        #     self.castlingRights[0] = False
+        # if startPos == 'a8':
+        #     self.castlingRights[3] = False
+        # if startPos == 'h8':
+        #     self.castlingRights[2] = False
+
+        currentFen = self.getBoardAsFen()
+        board1 = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
+        board2 = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
+
+        board1.set_fen_position(self.previousFen)
+        board2.set_fen_position(currentFen)
+
+        if board1.get_what_is_on_square('e1') != board2.get_what_is_on_square('e1'):
+            self.castlingRights[0] = False
+            self.castlingRights[1] = False
+        if board1.get_what_is_on_square('e8') != board2.get_what_is_on_square('e8'):
+            self.castlingRights[2] = False
+            self.castlingRights[3] = False
+        if board1.get_what_is_on_square('a1') != board2.get_what_is_on_square('a1'):
+            self.castlingRights[1] = False
+        if board1.get_what_is_on_square('h1') != board2.get_what_is_on_square('h1'):
+            self.castlingRights[0] = False
+        if board1.get_what_is_on_square('a8') != board2.get_what_is_on_square('a8'):
+            self.castlingRights[3] = False
+        if board1.get_what_is_on_square('h8') != board2.get_what_is_on_square('h8'):
+            self.castlingRights[2] = False
+        
+        
+        
+
+        self.updateCastlingString()
+
+
+
+        
 
     def login(self):
         self.get("https://www.chess.com/login")
@@ -309,13 +371,14 @@ class BoardHTML(webdriver.Chrome):
 
     def hasOponentMoved(self):
         new = self.getBoardAsFen()
+        self.CastlingUpdate()
         if new != self.previousFen:
             self.previousFen = new
-            time.sleep(0.4)
+            time.sleep(0.2)
             return True
         else:
             self.previousFen = new
-            time.sleep(0.4)
+            time.sleep(0.2)
             return False
         
     def setTurn(self, turn):
@@ -360,10 +423,11 @@ class BoardHTML(webdriver.Chrome):
         print(self.game.get_evaluation())
         print('after')
         bestmove = convertMoveStringHTML(movestring)
+        
         print(bestmove)
         self.movePiece(*bestmove)
         
-        time.sleep(0.4)
+        time.sleep(0.1)
 
     def getStats(self):
         wdl = self.game.get_wdl_stats()
