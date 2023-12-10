@@ -66,7 +66,7 @@ class ChessBotGUI:
 
 
         # Skill Level Slider
-        self.skill_level = tk.IntVar(value=20)
+        self.skill_level = tk.IntVar(value=12)
         self.display_skill = tk.CTkLabel(self.variables_frame, text="Skill Level " + str(self.skill_level.get()))
         self.display_skill.pack()
         self.skill_slider = tk.CTkSlider(self.variables_frame, from_=1, to=20, variable=self.skill_level)
@@ -102,15 +102,15 @@ class ChessBotGUI:
         buttons_frame = tk.CTkFrame(self.root)
         buttons_frame.pack()
 
-        tk.CTkButton(buttons_frame, text="Start Game", command=self.start_game_thread).grid(row=0, column=0, pady=10, padx=5)
-        tk.CTkButton(buttons_frame, text="Set Turn white", command=self.set_turnW).grid(row=0, column=1, pady=10, padx=5)
-        tk.CTkButton(buttons_frame, text="Set Turn black", command=self.set_turnB).grid(row=1, column=0, pady=10, padx=5)
-        tk.CTkButton(buttons_frame, text="Login", command=self.login).grid(row=1, column=1, pady=10, padx=5)
-        tk.CTkButton(buttons_frame, text="End Game", command=self.end_button).grid(row=2, column=0, pady=10, padx=5)
-        tk.CTkButton(buttons_frame, text="Update castling K", command=self.update_castlingK).grid(row=2, column=1, pady=10, padx=5)
-        tk.CTkButton(buttons_frame, text="Update castling Q", command=self.update_castlingQ).grid(row=3, column=0, pady=10, padx=5)
-        tk.CTkButton(buttons_frame, text="Update castling k", command=self.update_castlingk).grid(row=3, column=1, pady=10, padx=5)
-        tk.CTkButton(buttons_frame, text="Update castling q", command=self.update_castlingq).grid(row=4, column=0, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text="Start Game", command=self.start_game_thread).grid(row=0, column=1, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text="Set Turn white", command=self.set_turnW).grid(row=1, column=1, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text="Set Turn black", command=self.set_turnB).grid(row=2, column=1, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text="Login", command=self.login).grid(row=3, column=1, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text="End Game", command=self.end_button).grid(row=4, column=1, pady=10, padx=5)
+        # tk.CTkButton(buttons_frame, text="Update castling K", command=self.update_castlingK).grid(row=0, column=0, pady=10, padx=5)
+        # tk.CTkButton(buttons_frame, text="Update castling Q", command=self.update_castlingQ).grid(row=1, column=0, pady=10, padx=5)
+        # tk.CTkButton(buttons_frame, text="Update castling k", command=self.update_castlingk).grid(row=2, column=0, pady=10, padx=5)
+        # tk.CTkButton(buttons_frame, text="Update castling q", command=self.update_castlingq).grid(row=3, column=0, pady=10, padx=5)
 
         self.root.update_idletasks()
         self.root.mainloop()
@@ -141,7 +141,7 @@ class ChessBotGUI:
                     self.text_box.add_line('Move made: ' + movestring)
                     self.update_stats()
                     self.progress_bar.set(self.board.getStats()['wdl'][0]/1000 + self.board.getStats()['wdl'][1]/2000)
-                    self.progress_label.configure(text=f"{self.progress_bar.get()*100}%")
+                    self.progress_label.configure(text=f"{self.progress_bar.get()*100:.3}%")
                 
             except st.models.StockfishException as e:
                 print(e)

@@ -200,13 +200,11 @@ class BoardHTML(webdriver.Chrome):
     def __init__(self):
         super(BoardHTML, self).__init__()
 
-        self.position = {}
-        self.size = {}
         self.previousFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
         self.turn = 'w'
         self.castlingRights = [True, True, True, True]
         self.castlingString = 'KQkq'
-        self.skillLevel = 20
+        self.skillLevel = 12
         self.get("https://www.chess.com/play/computer")
         self.playing = False
         self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
