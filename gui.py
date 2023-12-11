@@ -77,8 +77,9 @@ class ChessBotGUI:
         # Create a progress ba
         self.progress_bar = tk.CTkProgressBar(self.variables_frame, orientation='horizontal', mode='determinate')
         self.progress_bar.pack()
-        self.progress_label = tk.CTkLabel(self.variables_frame, text=f"{self.progress_bar.get():.2}%")
+        self.progress_label = tk.CTkLabel(self.variables_frame, text=f"{round(self.progress_bar.get(),1)}%")
         self.progress_label.pack()
+    
 
 
         class TextBox:

@@ -35,6 +35,8 @@ Before you start, make sure you have Google Chrome installed on your machine. Th
 
 Remember, the bot requires Google Chrome to be installed on your machine to function correctly.
 
-## License
+To build the binary, run the following command:
 
-This project is licensed under the MIT License.
+```bash
+pyinstaller --onefile --add-binary='./stockfish-windows-x86-64.exe;.' gui.py
+```
