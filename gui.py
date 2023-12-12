@@ -144,6 +144,11 @@ class ChessBotGUI:
                     self.update_stats()
                     self.progress_bar.set(self.board.getStats()['wdl'][0]/1000 + self.board.getStats()['wdl'][1]/2000)
                     self.progress_label.configure(text=f"{self.progress_bar.get()*100}%")
+                    self.playing = False
+                    self.board.newGame()
+                    self.playing = True
+
+
                 
             except st.models.StockfishException as e:
                 print(e)

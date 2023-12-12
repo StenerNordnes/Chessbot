@@ -73,7 +73,7 @@ class BoardHTML(webdriver.Chrome):
         self.turn = 'w'
         self.castlingRights = [True, True, True, True]
         self.castlingString = 'KQkq'
-        self.skillLevel = 20
+        self.skillLevel = 5
         self.get("https://www.chess.com/play/computer")
         self.playing = False
 
@@ -280,6 +280,15 @@ class BoardHTML(webdriver.Chrome):
             self.find_element(By.XPATH, '//button[@data-cy="game-over-modal-new-game-button"]').click()
             self.castlingRights = [True, True, True, True]
             self.castlingString = 'KQkq'
+            # locate when the new game starts
+            while not self.find_element(By.XPATH, '//wc-chess-board'):
+                pass
+            self.identifyTurn()
+            return True
+        return False
+
+            
+
 
     def identifyTurn(self):
         element = self.find_element(By.XPATH, '//wc-chess-board')
