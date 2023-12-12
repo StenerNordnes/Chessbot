@@ -15,14 +15,7 @@ The script consists of the following classes and functions:
 To use this script, you need to have the Stockfish chess engine installed and provide the correct file path to the Stockfish executable. You also need to have the necessary Python libraries installed: stockfish, pyautogui, PIL, imagehash, cv2, numpy, pyscreeze, skimage, selenium, and keyboard.
 """
 import stockfish as st
-import pyautogui as p
-from PIL import Image
-import imagehash
 import re
-import cv2
-import numpy as np
-from pyscreeze import Box
-from skimage.metrics import structural_similarity as ssim
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -31,9 +24,28 @@ import os
 import sys
 from dotenv import dotenv_values
 
-config = dotenv_values(".env")
+import os
+import sys
+from dotenv import dotenv_values
 
-stockfish_path = config['stockfish_path']
+# Check if the program is run from a binary
+if getattr(sys, 'frozen', False):
+    # If the program is run from a binary, the binary is sys.executable
+    base_dir = os.path.dirname(sys.executable)
+    stockfish_path = os.path.join(base_dir, 'stockfish-windows-x86-64.exe')
+
+    # Check if the script is run as a PyInstaller bundle
+    if hasattr(sys, '_MEIPASS'):
+        # If bundled, use the extracted path in the temporary directory
+        base_dir = sys._MEIPASS
+
+        # Adjust the path accordingly (assuming the binary is in the root of the bundle)
+        stockfish_path = os.path.join(base_dir, 'stockfish-windows-x86-64.exe')
+else:
+    # If the program is run from an IDE, load the environment variable
+    config = dotenv_values(".env")
+    stockfish_path = config.get('stockfish_path', None)
+
 
 piece_mapping = {
     'br': 'r', 'bn': 'n', 'bb': 'b', 'bk': 'k', 'bq': 'q', 'bp': 'p',
@@ -67,13 +79,11 @@ class BoardHTML(webdriver.Chrome):
     def __init__(self):
         super(BoardHTML, self).__init__()
 
-        self.position = {}
-        self.size = {}
         self.previousFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
         self.turn = 'w'
         self.castlingRights = [True, True, True, True]
         self.castlingString = 'KQkq'
-        self.skillLevel = 5
+        self.skillLevel = 12
         self.get("https://www.chess.com/play/computer")
         self.playing = False
 
