@@ -16,6 +16,7 @@ class ChessBotGUI:
         self.playing = False
 
         self.root.attributes("-topmost", 1)
+        self.root.geometry("+{}+{}".format(self.root.winfo_screenwidth() - self.root.winfo_reqwidth(), 0))
 
         # Create a frame to hold the variables
         self.variables_frame = tk.CTkFrame(self.root)
@@ -103,17 +104,20 @@ class ChessBotGUI:
         buttons_frame = tk.CTkFrame(self.root)
         buttons_frame.pack()
 
-        tk.CTkButton(buttons_frame, text="Start Game", command=self.start_game_thread).grid(row=0, column=1, pady=10, padx=5)
-        tk.CTkButton(buttons_frame, text="Set Turn white", command=self.set_turnW).grid(row=1, column=1, pady=10, padx=5)
-        tk.CTkButton(buttons_frame, text="Set Turn black", command=self.set_turnB).grid(row=2, column=1, pady=10, padx=5)
-        tk.CTkButton(buttons_frame, text="Login", command=self.login).grid(row=3, column=1, pady=10, padx=5)
-        tk.CTkButton(buttons_frame, text="End Game", command=self.end_button).grid(row=4, column=1, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text="Start Game", command=self.start_game_thread).grid(row=0, column=0, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text="Set Turn white", command=self.set_turnW).grid(row=1, column=0, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text="Set Turn black", command=self.set_turnB).grid(row=2, column=0, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text="Login", command=self.login).grid(row=3, column=0, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text="End Game", command=self.end_button).grid(row=4, column=0, pady=10, padx=5)
         # tk.CTkButton(buttons_frame, text="Update castling K", command=self.update_castlingK).grid(row=0, column=0, pady=10, padx=5)
         # tk.CTkButton(buttons_frame, text="Update castling Q", command=self.update_castlingQ).grid(row=1, column=0, pady=10, padx=5)
         # tk.CTkButton(buttons_frame, text="Update castling k", command=self.update_castlingk).grid(row=2, column=0, pady=10, padx=5)
         # tk.CTkButton(buttons_frame, text="Update castling q", command=self.update_castlingq).grid(row=3, column=0, pady=10, padx=5)
-        tk.CTkButton(buttons_frame, text = "Identify Turn", command = self.board.identifyTurn).grid(row=5, column=1, pady=10, padx=5)
-        tk.CTkButton(buttons_frame, text = "New Game", command = self.board.newGame).grid(row=6, column=1, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text = "Identify Turn", command = self.board.identifyTurn).grid(row=5, column=0, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text = "New Game", command = self.board.newGame).grid(row=6, column=0, pady=10, padx=5)
+        tk.CTkButton(buttons_frame, text = "Print time", command = self.board.get_current_player_time).grid(row=7, column=0, pady=10, padx=5)
+
+
 
         self.root.update_idletasks()
         self.root.mainloop()
@@ -130,6 +134,7 @@ class ChessBotGUI:
         self.text_box.add_line('Game started') 
         self.skill_slider.configure(state='disabled')
         self.playing_value_label.configure(text= 'Playing' if self.playing else 'Idle')
+        movestring = ''
 
 
         if self.board.turn == 'w':
@@ -144,7 +149,7 @@ class ChessBotGUI:
                     self.text_box.add_line('Move made: ' + movestring)
                     self.update_stats()
                     self.progress_bar.set(self.board.getStats()['wdl'][0]/1000 + self.board.getStats()['wdl'][1]/2000)
-                    self.progress_label.configure(text=f"{self.progress_bar.get()*100:.3}%")
+                    self.progress_label.configure(text=f"{round(self.progress_bar.get()*100,2)}%")
                 
             except st.models.StockfishException as e:
                 print(e)
@@ -154,7 +159,14 @@ class ChessBotGUI:
                 print(e.with_traceback())
                 self.text_box.add_line('Error: ' + str(e))
                 break
+
+            finally:
+                if movestring is None:
+                    break
+
+
         print('Game ended successfully')
+        self.text_box.add_line('Game ended successfully')
         self.skill_slider.configure(state='enabled')
 
 

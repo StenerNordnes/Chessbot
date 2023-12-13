@@ -22,11 +22,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 import os
 import sys
-from dotenv import dotenv_values
-
-import os
-import sys
-from dotenv import dotenv_values
+from dotenv import DotEnv
 
 # Check if the program is run from a binary
 if getattr(sys, 'frozen', False):
@@ -43,8 +39,10 @@ if getattr(sys, 'frozen', False):
         stockfish_path = os.path.join(base_dir, 'stockfish-windows-x86-64.exe')
 else:
     # If the program is run from an IDE, load the environment variable
-    config = dotenv_values(".env")
-    stockfish_path = config.get('stockfish_path', None)
+    
+
+    config = DotEnv('.env').all()
+    stockfish_path = config['stockfish_path']
 
 
 piece_mapping = {
@@ -54,14 +52,16 @@ piece_mapping = {
 
 def convertMoveStringHTML(moveString):
     char_list = list(moveString)
-
     char_list[0] = int(ord(char_list[0]) - ord('a'))
     char_list[1] = 8 - int(char_list[1])
     char_list[2] = int(ord(char_list[2]) - ord('a'))
     char_list[3] = 8 - int(char_list[3])
     return [char_list[0], char_list[1], char_list[2], char_list[3]]
 
-
+def convertTimeString_millisecons(time_string:str) -> int:
+        minutes, seconds = map(int, time_string.split(":"))
+        milliseconds = minutes * 60000 + seconds * 1000
+        return milliseconds
 
 class BoardHTML(webdriver.Chrome):
     """
@@ -77,7 +77,7 @@ class BoardHTML(webdriver.Chrome):
     - movePiece(x, y, target_x, target_y): Moves a chess piece from the specified position to the target position on the board.
     """
     def __init__(self):
-        super(BoardHTML, self).__init__()
+        super().__init__()
 
         self.previousFen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
         self.turn = 'w'
@@ -262,27 +262,45 @@ class BoardHTML(webdriver.Chrome):
         self.game = st.Stockfish(stockfish_path, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30})
         print('Stockfish restarted')
     
-    def play(self):            
+    def play(self) -> str | None:
         self.findBoard()
         fen = self.getBoardAsFen()
         self.game.set_fen_position(fen)
         print(self.game.get_board_visual())
+        white_time, black_time = self.get_current_player_time()
         t1 = time.perf_counter()
-        movestring = self.game.get_best_move()
+        movestring: str = self.game.get_best_move(wtime=white_time, btime=black_time)
         t2 = time.perf_counter()
-        print(f"Time taken: {t2-t1:0.4f} seconds")
+        print(f"Get best move: {t2-t1:0.4f} seconds")
         print(movestring)
-        print(self.game.get_evaluation())
+        t1 = time.perf_counter()
         bestmove = convertMoveStringHTML(movestring)
-        
-        print(bestmove)
         self.movePiece(*bestmove)
+        t2 = time.perf_counter()
+        print(f"Move piece: {t2-t1:0.4f} seconds")
 
         return movestring
+    
 
     def getStats(self):
         wdl = self.game.get_wdl_stats()
         return {"wdl": wdl, **self.game.get_evaluation()}
+    
+    def get_current_player_time(self):
+        """Returns the top most player's time as the first element 
+        and the bottom player's time as the second element"""
+        curr_time = self.find_elements(By.CSS_SELECTOR, "span[data-cy='clock-time'].clock-time-monospace")
+        if len(curr_time) > 0:
+            top_time = convertTimeString_millisecons(curr_time[0].text)
+            bottom_time = convertTimeString_millisecons(curr_time[1].text)
+
+            print(top_time, bottom_time)
+
+            return top_time, bottom_time
+        return None, None
+
+
+
 
     def newGame(self):
         if self.find_elements(By.CSS_SELECTOR, "div[class*=game-over]"):
