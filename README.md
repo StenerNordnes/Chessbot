@@ -4,7 +4,7 @@ This is a Chess Bot that uses the Stockfish chess engine to play chess games.
 
 ## Features
 
-- Play chess against a bot powered by the Stockfish chess engine.
+- Play chess using a bot powered by the Stockfish chess engine.
 - Set the bot's skill level.
 - Manually set the turn.
 
