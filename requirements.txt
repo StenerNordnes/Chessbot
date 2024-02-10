@@ -4,6 +4,7 @@ certifi==2023.11.17
 cffi==1.16.0
 customtkinter==5.2.1
 darkdetect==0.8.0
+dotenv-python==0.0.1
 h11==0.14.0
 idna==3.6
 imageio==2.33.0

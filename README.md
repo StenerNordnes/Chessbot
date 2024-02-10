@@ -40,3 +40,8 @@ To build the binary, run the following command:
 ```bash
 pyinstaller --onefile --add-binary='./stockfish-windows-x86-64.exe;.' gui.py
 ```
+
+
+## Disclaimer
+
+Please read and understand the terms and services of chess.com before using this Chess Bot. The creators of this bot do not take any responsibility for any problems that may occur with your chess.com account. We strongly suggest using this bot only to play against other bots and not real players. This repository is for educational purposes only. The creators of this bot explicitly state that they assume zero accountability for any issues that may arise from using this bot.

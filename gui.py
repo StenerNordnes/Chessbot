@@ -1,7 +1,6 @@
 import customtkinter as tk
 from stockChessBot import BoardHTML
 import stockfish as st
-import os
 import threading
 import keyboard
 
@@ -80,6 +79,8 @@ class ChessBotGUI:
         self.progress_bar.pack()
         self.progress_label = tk.CTkLabel(self.variables_frame, text=f"{round(self.progress_bar.get(),1)}%")
         self.progress_label.pack()
+
+
     
 
 
