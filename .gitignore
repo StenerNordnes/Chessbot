@@ -7,6 +7,6 @@ __pycache__/
 /build/*
 stockfish-windows-x86-64.exe
 gui.spec
-
+test.ipynb
 
 
