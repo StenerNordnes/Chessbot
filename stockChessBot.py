@@ -22,7 +22,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 import os
 import sys
-from dotenv import DotEnv
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Check if the program is run from a binary
 if getattr(sys, 'frozen', False):
@@ -41,8 +43,8 @@ else:
     # If the program is run from an IDE, load the environment variable
     
 
-    config = DotEnv('.env').all()
-    stockfish_path = config['stockfish_path']
+    # config = DotEnv('.env').all()
+    stockfish_path = os.getenv('stockfish_path')
 
 
 piece_mapping = {
@@ -84,6 +86,7 @@ class BoardHTML(webdriver.Chrome):
         self.castlingRights = [True, True, True, True]
         self.castlingString = 'KQkq'
         self.skillLevel = 12
+        self.elo = 3000
         self.get("https://www.chess.com/play/computer")
         self.playing = False
 
@@ -221,8 +224,8 @@ class BoardHTML(webdriver.Chrome):
 
     def login(self):
         self.get("https://www.chess.com/login")
-        self.find_element(By.ID, "username").send_keys(config['username'])
-        self.find_element(By.ID, "password").send_keys(config['password'])
+        self.find_element(By.ID, "username").send_keys(os.getenv('usernames'))
+        self.find_element(By.ID, "password").send_keys(os.getenv('password'))
         self.find_element(By.ID, "login").click()
 
     def hasOponentMoved(self):
@@ -253,6 +256,11 @@ class BoardHTML(webdriver.Chrome):
     def setSkillLevel(self, level):
         self.skillLevel = level
         self.game.set_skill_level(level)
+    
+    def setEloLevel(self, level):
+        self.elo = level
+        self.game.set_elo_rating(level)
+        
 
     def endGame(self):
         del self.game

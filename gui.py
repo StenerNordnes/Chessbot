@@ -65,13 +65,13 @@ class ChessBotGUI:
         self.display_stats = DisplayStats(self.variables_frame)
 
 
-        # Skill Level Slider
-        self.skill_level = tk.IntVar(value=12)
-        self.display_skill = tk.CTkLabel(self.variables_frame, text="Skill Level " + str(self.skill_level.get()))
-        self.display_skill.pack()
-        self.skill_slider = tk.CTkSlider(self.variables_frame, from_=1, to=20, variable=self.skill_level)
-        self.skill_slider.pack(pady=(0,20))
-        self.skill_slider.bind("<B1-Motion>", self.set_skill)
+        # Elo Level Slider
+        self.elo = tk.IntVar(value=1200)
+        self.display_elo = tk.CTkLabel(self.variables_frame, text="elo Level " + str(self.elo.get()))
+        self.display_elo.pack()
+        self.elo_slider = tk.CTkSlider(self.variables_frame, from_=1, to=3000, variable=self.elo)
+        self.elo_slider.pack(pady=(0,20))
+        self.elo_slider.bind("<B1-Motion>", self.set_elo)
 
 
         # Create a progress ba
@@ -130,10 +130,11 @@ class ChessBotGUI:
 
     def start_game(self):
         self.board.initializeStockfish()
-        self.board.setSkillLevel(int(self.skill_level.get()))
+        self.board.setEloLevel(int(self.elo.get()))
+        print("elo level set to: ", self.elo.get())
         self.playing = True
         self.text_box.add_line('Game started') 
-        self.skill_slider.configure(state='disabled')
+        self.elo_slider.configure(state='disabled')
         self.playing_value_label.configure(text= 'Playing' if self.playing else 'Idle')
         movestring = ''
 
@@ -173,7 +174,7 @@ class ChessBotGUI:
 
         print('Game ended successfully')
         self.text_box.add_line('Game ended successfully')
-        self.skill_slider.configure(state='enabled')
+        self.elo_slider.configure(state='enabled')
 
 
     def update_stats(self):
@@ -184,7 +185,7 @@ class ChessBotGUI:
         self.thread.start()
 
     def end_button(self):
-        self.skill_slider.configure(state='normal')
+        self.elo_slider.configure(state='normal')
         self.board.endGame()
         self.text_box.add_line('Game ended')
         self.playing_value_label.configure(text="Idle")
@@ -197,6 +198,14 @@ class ChessBotGUI:
             
         else:
             print("Invalid skill level")
+
+    def set_elo(self, event=None):
+        elo = self.elo.get()
+        if elo >= 1 and elo <= 3000:
+            self.display_elo.configure(text="Elo Level: " + str(elo))
+            
+        else:
+            print("Invalid elo level")
 
     def set_turnW(self):
         # Code to set turn goes here
