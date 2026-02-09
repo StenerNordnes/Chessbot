@@ -213,7 +213,7 @@ class BoardHTML(webdriver.Chrome):
             resolved = stockfish_path
 
         self.game = st.Stockfish(
-            resolved, depth=19, parameters={"Threads": 2, "Minimum Thinking Time": 30}
+            resolved, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30}
         )
 
     def CastlingUpdate(self):
@@ -413,7 +413,7 @@ class BoardHTML(webdriver.Chrome):
         self.setTurn(turn)
 
     def waitRandomTime(self):
-        MAX_WAIT_TIME = 50
-        MIN_WAIT_TIME = 5
+        MAX_WAIT_TIME = 8
+        MIN_WAIT_TIME = 2
         sleepTime = MIN_WAIT_TIME + random.random() * (MAX_WAIT_TIME - MIN_WAIT_TIME)
         time.sleep(sleepTime)
