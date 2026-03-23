@@ -90,10 +90,14 @@ class BoardHTML(webdriver.Chrome):
         self.castlingString = "KQkq"
         self.skillLevel = 12
         self.elo = 3000
+        self.min_wait = 2
+        self.max_wait = 8
         self.get("https://www.chess.com/play/computer")
         self.playing = False
 
     def __del__(self):
+        if hasattr(self, "game"):
+            del self.game
         self.quit()
 
     def findBoard(self):
@@ -104,47 +108,31 @@ class BoardHTML(webdriver.Chrome):
         self.location = svg_element.location
         self.size = svg_element.size
 
+    def getBoardArray(self):
+        """
+        Returns the current position as a 2D array.
+        """
+        elements = self.find_elements(By.CSS_SELECTOR, "div[class*=piece]")
+        b = [["_" for _ in range(8)] for _ in range(8)]
+        for element in elements:
+            attr = element.get_attribute("class")
+            if not attr or "square" not in attr:
+                continue
+            pos = re.search(r"square-(\d+)", attr)
+            piece_match = re.findall(r"[bw][a-z]", attr)
+            if pos and piece_match:
+                p_code = pos.group(1)
+                piece = piece_match[0].strip()
+                x = int(p_code[0]) - 1
+                y = 8 - int(p_code[1])
+                b[y][x] = piece_mapping[piece]
+        return b
+
     def getBoardAsFen(self):
         """
         Returns the current position of the chess board in FEN notation.
-
-        Parameters:
-        - turn: A string representing the current turn (e.g., 'w' for white, 'b' for black).
-
-        Returns:
-        - fen: A string representing the FEN notation of the current position.
         """
-        elements = self.find_elements(By.CSS_SELECTOR, "div[class*=piece]")
-
-        b = [["_" for _ in range(8)] for _ in range(8)]
-
-        for element in elements:
-            attr = element.get_attribute("class")
-
-            if attr is None:
-                continue
-
-            if attr.find("square") == -1:
-                continue
-
-            # _, piece, pos = attr.split()
-            # _,pos = pos.split('-')
-            # pos = list(pos)
-
-            pos = re.search(r"square-(\d+)", attr)
-            piece = re.findall(r"[bw][a-z]", attr)[0].strip()
-
-            if pos is None:
-                print("Pos not found")
-                continue
-
-            pos = pos.group(1)
-
-            x = int(pos[0]) - 1
-            y = 8 - int(pos[1])
-
-            b[y][x] = piece_mapping[piece]
-
+        b = self.getBoardArray()
         fen = ""
         for row in b:
             empty_count = 0
@@ -159,21 +147,12 @@ class BoardHTML(webdriver.Chrome):
             if empty_count > 0:
                 fen += str(empty_count)
             fen += "/"
-
-        # Remove the trailing '/'
         fen = fen[:-1]
-
         return f"{fen} {self.turn} {self.castlingString} - 0 1"
 
     def movePiece(self, x, y, target_x, target_y):
         """
         Moves a chess piece from the specified position to the target position on the board.
-
-        Parameters:
-        - x: An integer representing the x-coordinate of the starting position.
-        - y: An integer representing the y-coordinate of the starting position.
-        - target_x: An integer representing the x-coordinate of the target position.
-        - target_y: An integer representing the y-coordinate of the target position.
         """
         self.findBoard()
         Wdx = self.size["width"] / 8
@@ -184,8 +163,6 @@ class BoardHTML(webdriver.Chrome):
         targetCenter_x = self.location["x"] + Wdx / 2 + target_x * Wdx
         targetCenter_y = self.location["y"] + Hdx / 2 + target_y * Hdx
 
-        print(targetCenter_x, targetCenter_y)
-
         actions = ActionChains(self, duration=100)
         actions.move_by_offset(centerX, centerY)
         actions.click()
@@ -194,8 +171,9 @@ class BoardHTML(webdriver.Chrome):
         actions.click()
         actions.move_by_offset(-targetCenter_x, -targetCenter_y)
         actions.perform()
-        self.CastlingUpdate()
+        
         self.previousFen = self.getBoardAsFen()
+        self.CastlingUpdate()
 
     def initializeStockfish(self):
         # Ensure we have a valid path to the Stockfish binary before initializing
@@ -206,50 +184,36 @@ class BoardHTML(webdriver.Chrome):
                 resolved = found
             else:
                 raise FileNotFoundError(
-                    "Stockfish binary not found. Set the STOCKFISH_PATH (or stockfish_path) environment variable "
-                    "to the full path of the Stockfish executable, or install Stockfish in your PATH."
+                    "Stockfish binary not found."
                 )
         else:
             resolved = stockfish_path
 
-        self.game = st.Stockfish(
-            resolved, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30}
-        )
+        if not hasattr(self, "game"):
+            self.game = st.Stockfish(
+                resolved, depth=18, parameters={"Threads": 2, "Minimum Thinking Time": 30}
+            )
 
     def CastlingUpdate(self):
-
-        currentFen = self.getBoardAsFen()
-        board1 = st.Stockfish(
-            stockfish_path,
-            depth=18,
-            parameters={"Threads": 2, "Minimum Thinking Time": 30},
-        )
-        board2 = st.Stockfish(
-            stockfish_path,
-            depth=18,
-            parameters={"Threads": 2, "Minimum Thinking Time": 30},
-        )
-
-        board1.set_fen_position(self.previousFen)
-        board2.set_fen_position(currentFen)
-
-        if board1.get_what_is_on_square("e1") != board2.get_what_is_on_square("e1"):
+        """
+        Updates castling rights by comparing the current board state with the starting positions of Kings and Rooks.
+        """
+        b = self.getBoardArray()
+        # White King
+        if b[7][4] != "K":
             self.castlingRights[0] = False
             self.castlingRights[1] = False
-        elif board1.get_what_is_on_square("e8") != board2.get_what_is_on_square("e8"):
+        # White Rooks
+        if b[7][7] != "R": self.castlingRights[0] = False
+        if b[7][0] != "R": self.castlingRights[1] = False
+        
+        # Black King
+        if b[0][4] != "k":
             self.castlingRights[2] = False
             self.castlingRights[3] = False
-        elif board1.get_what_is_on_square("a1") != board2.get_what_is_on_square("a1"):
-            self.castlingRights[1] = False
-        elif board1.get_what_is_on_square("h1") != board2.get_what_is_on_square("h1"):
-            self.castlingRights[0] = False
-        elif board1.get_what_is_on_square("a8") != board2.get_what_is_on_square("a8"):
-            self.castlingRights[3] = False
-        elif board1.get_what_is_on_square("h8") != board2.get_what_is_on_square("h8"):
-            self.castlingRights[2] = False
-
-        del board1
-        del board2
+        # Black Rooks
+        if b[0][7] != "r": self.castlingRights[2] = False
+        if b[0][0] != "r": self.castlingRights[3] = False
 
         self.updateCastlingString()
 
@@ -413,7 +377,5 @@ class BoardHTML(webdriver.Chrome):
         self.setTurn(turn)
 
     def waitRandomTime(self):
-        MAX_WAIT_TIME = 8
-        MIN_WAIT_TIME = 2
-        sleepTime = MIN_WAIT_TIME + random.random() * (MAX_WAIT_TIME - MIN_WAIT_TIME)
+        sleepTime = self.min_wait + random.random() * (self.max_wait - self.min_wait)
         time.sleep(sleepTime)

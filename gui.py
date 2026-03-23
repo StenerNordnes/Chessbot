@@ -3,358 +3,343 @@ from stockChessBot import BoardHTML
 import stockfish as st
 import threading
 import keyboard
+import time
 from dotenv import load_dotenv
 
 load_dotenv()
 
 tk.set_appearance_mode("dark")
+tk.set_default_color_theme("blue")
+
+
+class DisplayStats:
+    def __init__(self, parent):
+        self.frame = tk.CTkFrame(parent)
+        self.frame.pack(fill="x", pady=5, padx=10)
+
+        tk.CTkLabel(self.frame, text="Win", font=("Arial", 10, "bold")).grid(
+            row=0, column=0, padx=15
+        )
+        tk.CTkLabel(self.frame, text="Draw", font=("Arial", 10, "bold")).grid(
+            row=0, column=1, padx=15
+        )
+        tk.CTkLabel(self.frame, text="Loss", font=("Arial", 10, "bold")).grid(
+            row=0, column=2, padx=15
+        )
+
+        self.wins_label = tk.CTkLabel(self.frame, text="0%")
+        self.wins_label.grid(row=1, column=0)
+        self.draws_label = tk.CTkLabel(self.frame, text="0%")
+        self.draws_label.grid(row=1, column=1)
+        self.losses_label = tk.CTkLabel(self.frame, text="0%")
+        self.losses_label.grid(row=1, column=2)
+
+    def update(self, stats):
+        self.wins_label.configure(text=f"{stats[0] / 10}%")
+        self.draws_label.configure(text=f"{stats[1] / 10}%")
+        self.losses_label.configure(text=f"{stats[2] / 10}%")
+
+
+class LogBox:
+    def __init__(self, parent):
+        self.text_box = tk.CTkTextbox(parent, height=120, font=("Consolas", 11))
+        self.text_box.pack(fill="both", expand=True, pady=5, padx=10)
+        self.lines = ["Bot initialized"]
+        self.text_box.insert("0.0", "\n".join(self.lines))
+
+    def add_line(self, line):
+        timestamp = time.strftime("%H:%M:%S")
+        self.lines.append(f"[{timestamp}] {line}")
+        if len(self.lines) > 50:
+            self.lines.pop(0)
+        self.text_box.delete("0.0", "end")
+        self.text_box.insert("0.0", "\n".join(self.lines))
+        self.text_box.see("end")
 
 
 class ChessBotGUI:
     def __init__(self):
         self.root = tk.CTk()
-        self.root.title("StockChessBot")
+        self.root.title("StockChessBot Pro")
+        self.root.geometry("340x800")
+        self.root.attributes("-topmost", 1)
+
         self.board = BoardHTML()
         self.playing = False
 
-        self.root.attributes("-topmost", 1)
-        self.root.geometry(
-            "+{}+{}".format(
-                self.root.winfo_screenwidth() - self.root.winfo_reqwidth(), 0
-            )
-        )
-
-        # Create a frame to hold the variables
-        self.variables_frame = tk.CTkFrame(self.root)
-        self.variables_frame.pack(side="right", padx=10, pady=(10, 0))
-
-        self.variables_display_frame = tk.CTkFrame(self.variables_frame)
-        self.variables_display_frame.pack(pady=(5, 10))
-
-        self.castling_rights_label = tk.CTkLabel(
-            self.variables_display_frame, text="Castling: "
-        ).grid(
-            row=0,
-            column=0,
-            padx=5,
-        )
-        self.castling_rights_value_label = tk.CTkLabel(
-            self.variables_display_frame, text=self.board.castlingString
-        )
-        self.castling_rights_value_label.grid(row=1, column=0, padx=5)
-
-        self.turn_label = tk.CTkLabel(self.variables_display_frame, text="Turn: ").grid(
-            row=0, column=1, padx=5
-        )
-        self.turn_value_label = tk.CTkLabel(
-            self.variables_display_frame, text=self.board.turn
-        )
-        self.turn_value_label.grid(row=1, column=1, padx=5)
-
-        tk.CTkLabel(self.variables_display_frame, text="Status: ").grid(
-            row=0, column=2, padx=5
-        )
-        self.playing_value_label = tk.CTkLabel(
-            self.variables_display_frame, text="Idle"
-        )
-        self.playing_value_label.grid(row=1, column=2, padx=5)
-
-        class DisplayStats:
-            def __init__(self, variables_frame):
-                self.variables_frame = variables_frame
-                self.display_stats_frame = tk.CTkFrame(self.variables_frame)
-
-                self.display_stats_frame.pack(pady=(0, 10))  # Add padding to the bottom
-
-                tk.CTkLabel(self.display_stats_frame, text="Win: ").grid(
-                    row=0, column=0, padx=5
-                )
-                tk.CTkLabel(self.display_stats_frame, text="Draw: ").grid(
-                    row=0, column=1, padx=5
-                )
-                tk.CTkLabel(self.display_stats_frame, text="Lose: ").grid(
-                    row=0, column=2, padx=5
-                )
-
-                self.wins_percentage_label = tk.CTkLabel(
-                    self.display_stats_frame, text="0 %"
-                )
-                self.wins_percentage_label.grid(row=1, column=0, padx=5)
-                self.draws_percentage_label = tk.CTkLabel(
-                    self.display_stats_frame, text="0 %"
-                )
-                self.draws_percentage_label.grid(row=1, column=1, padx=5)
-                self.losses_percentage_label = tk.CTkLabel(
-                    self.display_stats_frame, text="0 %"
-                )
-                self.losses_percentage_label.grid(row=1, column=2, padx=5)
-
-            def present_stats(self, stats):
-                self.wins_percentage_label.configure(text="{} %".format(stats[0] / 10))
-                self.draws_percentage_label.configure(text="{} %".format(stats[1] / 10))
-                self.losses_percentage_label.configure(
-                    text="{} %".format(stats[2] / 10)
-                )
-
-        self.display_stats = DisplayStats(self.variables_frame)
-
-        # Mode Selection
-        self.mode = tk.StringVar(value="Elo")
-        self.mode_selector = tk.CTkSegmentedButton(
-            self.variables_frame,
-            values=["Elo", "Skill Level"],
-            command=self.toggle_mode,
-            variable=self.mode,
-        )
-        self.mode_selector.pack(pady=(10, 5))
-
-        # Elo Level Slider
-        self.elo = tk.IntVar(value=1200)
-        self.elo_frame = tk.CTkFrame(self.variables_frame, fg_color="transparent")
-        self.elo_frame.pack()
-
-        self.display_elo = tk.CTkLabel(
-            self.elo_frame, text="Elo Level " + str(self.elo.get())
-        )
-        self.display_elo.pack()
-        self.elo_slider = tk.CTkSlider(
-            self.elo_frame, from_=100, to=3000, variable=self.elo, command=self.set_elo
-        )
-        self.elo_slider.pack(pady=(0, 20))
-
-        # Skill Level Slider
-        self.skill_level = tk.IntVar(value=12)
-        self.skill_frame = tk.CTkFrame(self.variables_frame, fg_color="transparent")
-        # Hidden by default if Elo is selected
-
-        self.display_skill = tk.CTkLabel(
-            self.skill_frame, text="Skill Level " + str(self.skill_level.get())
-        )
-        self.display_skill.pack()
-        self.skill_slider = tk.CTkSlider(
-            self.skill_frame,
-            from_=1,
-            to=20,
-            variable=self.skill_level,
-            command=self.set_skill,
-        )
-        self.skill_slider.pack(pady=(0, 20))
-
-        # Initial visibility
-        self.toggle_mode("Elo")
-
-        # Create a progress ba
-        self.progress_bar = tk.CTkProgressBar(
-            self.variables_frame, orientation="horizontal", mode="determinate"
-        )
-        self.progress_bar.pack()
-        self.progress_label = tk.CTkLabel(
-            self.variables_frame, text=f"{round(self.progress_bar.get(), 1)}%"
-        )
-        self.progress_label.pack()
-
-        class TextBox:
-            def __init__(self, root):
-                self.root = root
-                self.text_box = tk.CTkTextbox(self.root)  # Set the state to 'disabled'
-                self.text_box.pack(pady=(0, 10), padx=8)
-                self.lines = ["Stockfish bot started"]
-                self.text_box.insert(tk.END, "\n".join(self.lines))
-
-            def add_line(self, new_line):
-                self.lines.append(new_line)
-                if len(self.lines) > 8:
-                    self.lines.pop(0)
-                self.text_box.delete(1.0, tk.END)
-                self.text_box.insert(tk.END, "\n".join(self.lines))
-                self.text_box.see(tk.END)
-
-        self.text_box = TextBox(self.variables_frame)
-
-        buttons_frame = tk.CTkFrame(self.root)
-        buttons_frame.pack(pady=10)
-
-        # Row 1: Main Controls
-        self.start_btn = tk.CTkButton(
-            buttons_frame,
-            text="Start Game",
-            command=self.start_game_thread,
-            fg_color="green",
-            hover_color="darkgreen",
-        )
-        self.start_btn.grid(row=0, column=0, pady=5, padx=5)
-
-        self.end_btn = tk.CTkButton(
-            buttons_frame,
-            text="End Game",
-            command=self.end_button,
-            fg_color="red",
-            hover_color="darkred",
-        )
-        self.end_btn.grid(row=0, column=1, pady=5, padx=5)
-
-        # Row 2: Turn Controls
-        tk.CTkButton(buttons_frame, text="Turn: White", command=self.set_turnW).grid(
-            row=1, column=0, pady=5, padx=5
-        )
-        tk.CTkButton(buttons_frame, text="Turn: Black", command=self.set_turnB).grid(
-            row=1, column=1, pady=5, padx=5
-        )
-
-        # Row 3: Action Controls
-        tk.CTkButton(buttons_frame, text="Login", command=self.login).grid(
-            row=2, column=0, pady=5, padx=5
-        )
-        tk.CTkButton(
-            buttons_frame, text="Identify Turn", command=self.board.identifyTurn
-        ).grid(row=2, column=1, pady=5, padx=5)
-
-        # Row 4: Game Management
-        tk.CTkButton(buttons_frame, text="New Game", command=self.board.newGame).grid(
-            row=3, column=0, pady=5, padx=5
-        )
-        tk.CTkButton(
-            buttons_frame, text="Print Time", command=self.board.get_current_player_time
-        ).grid(row=3, column=1, pady=5, padx=5)
-
-        self.root.update_idletasks()
+        self.setup_ui()
         self.root.mainloop()
 
-    def __del__(self):
-        del self.board
+    def setup_ui(self):
+        # 1. Header (Status)
+        self.header = tk.CTkFrame(self.root, fg_color="#2b2b2b")
+        self.header.pack(fill="x", padx=10, pady=(10, 5))
 
-    def start_game(self):
-        self.board.initializeStockfish()
+        self.status_label = tk.CTkLabel(
+            self.header, text="IDLE", font=("Arial", 18, "bold"), text_color="#888888"
+        )
+        self.status_label.pack(side="left", padx=15, pady=10)
 
-        mode = self.mode.get()
-        if mode == "Elo":
-            self.board.setEloLevel(int(self.elo.get()))
-            self.text_box.add_line(f"Elo set to: {self.elo.get()}")
+        self.info_frame = tk.CTkFrame(self.header, fg_color="transparent")
+        self.info_frame.pack(side="right", padx=15)
+
+        self.turn_indicator = tk.CTkLabel(
+            self.info_frame, text="Turn: White", font=("Arial", 11)
+        )
+        self.turn_indicator.pack()
+        self.castling_indicator = tk.CTkLabel(
+            self.info_frame, text="KQkq", font=("Consolas", 10), text_color="#aaaaaa"
+        )
+        self.castling_indicator.pack()
+
+        # 2. Evaluation
+        self.eval_frame = tk.CTkFrame(self.root)
+        self.eval_frame.pack(fill="x", padx=10, pady=5)
+
+        self.progress_bar = tk.CTkProgressBar(
+            self.eval_frame, mode="determinate", height=12
+        )
+        self.progress_bar.pack(fill="x", padx=20, pady=(15, 5))
+        self.progress_bar.set(0.5)
+
+        self.progress_label = tk.CTkLabel(
+            self.eval_frame, text="Evaluation: 50.0%", font=("Arial", 11, "bold")
+        )
+        self.progress_label.pack(pady=(0, 10))
+
+        # 3. Stats
+        self.stats = DisplayStats(self.root)
+
+        # 4. Config Tabs
+        self.tabs = tk.CTkTabview(self.root, height=320)
+        self.tabs.pack(fill="both", padx=10, pady=5)
+        self.tabs.add("Engine")
+        self.tabs.add("Actions")
+
+        # -- Engine Tab --
+        engine_tab = self.tabs.tab("Engine")
+
+        tk.CTkLabel(engine_tab, text="Mode Selection", font=("Arial", 11, "bold")).pack(
+            pady=(5, 0)
+        )
+        self.mode = tk.StringVar(value="Elo")
+        self.mode_selector = tk.CTkSegmentedButton(
+            engine_tab,
+            values=["Elo", "Skill"],
+            variable=self.mode,
+            command=self.toggle_mode,
+        )
+        self.mode_selector.pack(pady=5, padx=10, fill="x")
+
+        self.level_var = tk.IntVar(value=1200)
+        self.level_label = tk.CTkLabel(engine_tab, text="Elo Level: 1200")
+        self.level_label.pack(pady=(10, 0))
+        self.level_slider = tk.CTkSlider(
+            engine_tab,
+            from_=100,
+            to=3000,
+            variable=self.level_var,
+            command=self.update_level_ui,
+        )
+        self.level_slider.pack(fill="x", padx=20)
+
+        tk.CTkLabel(
+            engine_tab, text="Response Speed (Wait Time)", font=("Arial", 11, "bold")
+        ).pack(pady=(15, 0))
+        self.speed_var = tk.DoubleVar(value=2.0)
+        self.speed_slider = tk.CTkSlider(
+            engine_tab,
+            from_=0.1,
+            to=8.0,
+            variable=self.speed_var,
+            command=self.update_speed_ui,
+        )
+        self.speed_slider.pack(fill="x", padx=20)
+        self.speed_label = tk.CTkLabel(
+            engine_tab, text="Min Wait: 2.0s", font=("Arial", 10)
+        )
+        self.speed_label.pack()
+
+        tk.CTkLabel(
+            engine_tab, text="Manual Turn Correction", font=("Arial", 11, "bold")
+        ).pack(pady=(15, 0))
+        self.turn_var = tk.StringVar(value="White")
+        self.turn_selector = tk.CTkSegmentedButton(
+            engine_tab,
+            values=["White", "Black"],
+            variable=self.turn_var,
+            command=self.manual_turn_set,
+        )
+        self.turn_selector.pack(pady=5, padx=10, fill="x")
+
+        # -- Actions Tab --
+        actions_tab = self.tabs.tab("Actions")
+        tk.CTkButton(
+            actions_tab,
+            text="Login to Chess.com",
+            command=self.login,
+            fg_color="#3b3b3b",
+        ).pack(pady=8, fill="x", padx=30)
+        tk.CTkButton(
+            actions_tab,
+            text="Identify Board State",
+            command=self.identify_state,
+            fg_color="#3b3b3b",
+        ).pack(pady=8, fill="x", padx=30)
+        tk.CTkButton(
+            actions_tab,
+            text="Force New Game",
+            command=self.new_game,
+            fg_color="#3b3b3b",
+        ).pack(pady=8, fill="x", padx=30)
+
+        tk.CTkLabel(
+            actions_tab, text="Shortcuts:", font=("Arial", 11, "bold"), justify="left"
+        ).pack(pady=(20, 0), padx=30, anchor="w")
+        tk.CTkLabel(
+            actions_tab,
+            text="[E]  Force Bot Move\n[X]  Flip Board (Internal)",
+            font=("Consolas", 10),
+            justify="left",
+        ).pack(padx=30, anchor="w")
+
+        # 5. Log
+        self.log_box = LogBox(self.root)
+
+        # 6. Main Buttons
+        self.btn_frame = tk.CTkFrame(self.root, fg_color="transparent")
+        self.btn_frame.pack(fill="x", side="bottom", padx=10, pady=15)
+
+        self.start_btn = tk.CTkButton(
+            self.btn_frame,
+            text="START BOT",
+            fg_color="#2d8a2d",
+            hover_color="#1e5c1e",
+            font=("Arial", 15, "bold"),
+            height=45,
+            command=self.start_game_thread,
+        )
+        self.start_btn.pack(side="left", fill="x", expand=True, padx=(0, 5))
+
+        self.stop_btn = tk.CTkButton(
+            self.btn_frame,
+            text="STOP",
+            fg_color="#a83232",
+            hover_color="#7d2525",
+            font=("Arial", 15, "bold"),
+            height=45,
+            command=self.stop_game,
+        )
+        self.stop_btn.pack(side="right", fill="x", expand=True, padx=(5, 0))
+
+    def update_level_ui(self, _=None):
+        val = int(self.level_var.get())
+        if self.mode.get() == "Elo":
+            self.level_label.configure(text=f"Elo Level: {val}")
         else:
-            self.board.setSkillLevel(int(self.skill_level.get()))
-            self.text_box.add_line(f"Skill level set to: {self.skill_level.get()}")
+            # Skill level 1-20
+            skill = int(self.level_var.get())
+            self.level_label.configure(text=f"Skill Level: {skill}")
 
-        self.playing = True
-        self.text_box.add_line("Game started")
-
-        self.elo_slider.configure(state="disabled")
-        self.skill_slider.configure(state="disabled")
-        self.mode_selector.configure(state="disabled")
-
-        self.playing_value_label.configure(text="Playing" if self.playing else "Idle")
-        movestring = ""
-
-        if self.board.turn == "w":
-            self.board.play()
-
-        while self.playing:
-            try:
-                if self.board.hasOponentMoved() or keyboard.is_pressed("e"):
-                    self.castling_rights_value_label.configure(
-                        text=self.board.castlingString
-                    )
-                    self.text_box.add_line("Thinking...")
-                    movestring = self.board.play()
-                    self.text_box.add_line("Move made: " + (movestring or ""))
-                    self.update_stats()
-                    self.progress_bar.set(
-                        self.board.getStats()["wdl"][0] / 1000
-                        + self.board.getStats()["wdl"][1] / 2000
-                    )
-                    self.progress_label.configure(
-                        text=f"{round(self.progress_bar.get() * 100, 2)}%"
-                    )
-                    self.playing = False
-                    self.board.newGame()
-                    self.playing = True
-
-            except st.models.StockfishException as e:
-                print(e)
-                self.board.resetStockfish()
-                self.text_box.add_line("Stockfish crashed, restarting...")
-            except Exception as e:
-                self.text_box.add_line("Error: " + str(e))
-                break
-
-            finally:
-                if movestring is None:
-                    break
-
-        print("Game ended successfully")
-        self.text_box.add_line("Game ended successfully")
-        self.elo_slider.configure(state="normal")
-        self.skill_slider.configure(state="normal")
-        self.mode_selector.configure(state="normal")
+    def update_speed_ui(self, _=None):
+        val = round(self.speed_var.get(), 1)
+        self.speed_label.configure(text=f"Min Wait: {val}s")
+        self.board.min_wait = val
+        self.board.max_wait = val + 4.0
 
     def toggle_mode(self, value):
         if value == "Elo":
-            self.skill_frame.pack_forget()
-            self.elo_frame.pack(after=self.mode_selector)
+            self.level_slider.configure(from_=100, to=3000)
+            self.level_var.set(1200)
         else:
-            self.elo_frame.pack_forget()
-            self.skill_frame.pack(after=self.mode_selector)
+            self.level_slider.configure(from_=1, to=20)
+            self.level_var.set(12)
+        self.update_level_ui()
 
-    def update_stats(self):
-        self.display_stats.present_stats(self.board.getStats()["wdl"])
+    def manual_turn_set(self, value):
+        turn_code = "w" if value == "White" else "b"
+        self.board.setTurn(turn_code)
+        self.turn_indicator.configure(text=f"Turn: {value}")
+        self.log_box.add_line(f"Turn manually set to {value}")
 
     def start_game_thread(self):
-        self.thread = threading.Thread(target=self.start_game)
+        if self.playing:
+            return
+        self.playing = True
+        self.status_label.configure(text="PLAYING", text_color="#4CAF50")
+        self.start_btn.configure(state="disabled")
+
+        # Apply settings
+        self.board.initializeStockfish()
+        if self.mode.get() == "Elo":
+            self.board.setEloLevel(int(self.level_var.get()))
+        else:
+            self.board.setSkillLevel(int(self.level_var.get()))
+
+        self.log_box.add_line("Bot starting...")
+        self.thread = threading.Thread(target=self.game_loop, daemon=True)
         self.thread.start()
 
-    def end_button(self):
-        self.elo_slider.configure(state="normal")
-        self.skill_slider.configure(state="normal")
-        self.mode_selector.configure(state="normal")
-        self.board.endGame()
-        self.text_box.add_line("Game ended")
-        self.playing_value_label.configure(text="Idle")
+    def stop_game(self):
+        self.playing = False
+        self.status_label.configure(text="IDLE", text_color="#888888")
+        self.start_btn.configure(state="normal")
+        self.board.playing = False
+        self.log_box.add_line("Bot stopped.")
 
-    def set_skill(self, event=None):
-        skill = self.skill_level.get()
-        if skill >= 1 and skill <= 20:
-            self.display_skill.configure(text="Skill Level: " + str(skill))
+    def game_loop(self):
+        try:
+            if self.board.turn == "w":
+                self.log_box.add_line("Initial move (White)...")
+                self.board.play()
 
-        else:
-            print("Invalid skill level")
+            while self.playing:
+                if self.board.hasOponentMoved() or keyboard.is_pressed("e"):
+                    self.castling_indicator.configure(text=self.board.castlingString)
+                    self.log_box.add_line("Thinking...")
 
-    def set_elo(self, event=None):
-        elo = self.elo.get()
-        if elo >= 1 and elo <= 3000:
-            self.display_elo.configure(text="Elo Level: " + str(elo))
+                    move = self.board.play()
+                    self.log_box.add_line(f"Move made: {move}")
 
-        else:
-            print("Invalid elo level")
+                    # Update Stats
+                    stats = self.board.getStats()
+                    self.stats.update(stats["wdl"])
 
-    def set_turnW(self):
-        # Code to set turn goes here
-        if not self.playing:
-            self.board.setTurn("w")
-            self.turn_value_label.configure(text="Turn: " + self.board.turn)
+                    # Update Eval Progress
+                    eval_val = stats["wdl"][0] / 1000 + stats["wdl"][1] / 2000
+                    self.progress_bar.set(eval_val)
+                    self.progress_label.configure(
+                        text=f"Evaluation: {round(eval_val * 100, 1)}%"
+                    )
 
-    def set_turnB(self):
-        if not self.playing:
-            self.board.setTurn("b")
-            self.turn_value_label.configure(text="Turn: " + self.board.turn)
+                    # Check for new game
+                    if self.board.newGame():
+                        self.log_box.add_line("New game detected.")
+                        self.identify_state()
+
+                time.sleep(0.5)
+        except Exception as e:
+            self.log_box.add_line(f"Error: {str(e)}")
+            self.stop_game()
 
     def login(self):
-        self.board.login()
+        self.log_box.add_line("Attempting login...")
+        try:
+            self.board.login()
+            self.log_box.add_line("Login command sent.")
+        except Exception as e:
+            self.log_box.add_line(f"Login failed: {str(e)}")
 
-    def update_castlingK(self):
-        self.board.updateCastlingRights(0)
-        self.castling_rights_value_label.configure(text=self.board.castlingString)
+    def identify_state(self):
+        self.board.identifyTurn()
+        turn_text = "White" if self.board.turn == "w" else "Black"
+        self.turn_indicator.configure(text=f"Turn: {turn_text}")
+        self.castling_indicator.configure(text=self.board.castlingString)
+        self.log_box.add_line(f"State synced. Turn: {turn_text}")
 
-    def update_castlingQ(self):
-        self.board.updateCastlingRights(1)
-        self.castling_rights_value_label.configure(text=self.board.castlingString)
-
-    def update_castlingk(self):
-        self.board.updateCastlingRights(2)
-        self.castling_rights_value_label.configure(text=self.board.castlingString)
-
-    def update_castlingq(self):
-        self.board.updateCastlingRights(3)
-        self.castling_rights_value_label.configure(text=self.board.castlingString)
-        self.turn_value_label.configure(text=self.board.turn)
+    def new_game(self):
+        self.board.newGame()
+        self.log_box.add_line("Force new game triggered.")
 
 
 if __name__ == "__main__":
