@@ -33,7 +33,7 @@ load_dotenv()
 
 
 # Resolve the final path (may be None if not found)
-stockfish_path = "./stockfish.exe"
+stockfish_path = "./stockfish"
 
 
 piece_mapping = {

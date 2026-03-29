@@ -8,5 +8,6 @@ __pycache__/
 stockfish-windows-x86-64.exe
 gui.spec
 test.ipynb
+stockfish*
 
 
